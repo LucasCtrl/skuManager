@@ -105,3 +105,17 @@ Bun, Typescript, OXC (linter, formatter), sqlite, drizzle
 - Settings: change data folder, app/DB version (read-only), theme follow system/light/dark, manual DB backup, language.
 - UI language: English + French (i18n).
 - Chosen data folder path is stored in the per-user app config dir (not in the data folder).
+
+# Commands
+Electrobun 2 uses the Hutch toolchain (`~/.hutch/bin` on PATH); the main process runs on Cottontail (Electrobun's Bun runtime).
+- `hutch install` — install deps
+- `hutch run start` / `hutch run dev` — build and launch (dev = watch)
+- `hutch run build` — release build
+- `hutch run test` — backend tests (`bun test`, store + file ops)
+- `hutch run lint` / `hutch run fmt` / `hutch run typecheck`
+
+# Layout
+- `src/shared/` — RPC contract (`rpc.ts`) and `APP_VERSION` (`version.ts`, single source of truth)
+- `src/bun/` — main process: `store.ts` (data folder, db, versions, products), `files.ts` (product folder ops, path guard), `db/` (drizzle schema + SQL migrations), `index.ts` (settings, RPC handlers, localhost upload server for OS drag-in)
+- `src/mainview/` — React UI: `App.tsx` (shell, db gate, settings), `pages.tsx` (list, product), `ui.tsx`, `i18n.ts`, `explorer/`
+- Bumping the version: change `APP_VERSION`; if the schema changes, add an entry to `src/bun/db/migrations.ts` and update `schema.ts`.

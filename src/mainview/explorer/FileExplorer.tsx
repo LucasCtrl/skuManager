@@ -88,12 +88,13 @@ export function FileExplorer({ sku, t }: { sku: string; t: T }) {
   const uploadUrl = useRef<string>();
 
   const refresh = () => setTick((n) => n + 1);
-  useEffect(() => setPath(""), [sku]);
-  useEffect(() => {
+  // The parent remounts this component per SKU (key={sku}), so only folder changes need a reset.
+  const go = (p: string) => {
+    setPath(p);
     setSelected(new Set());
     setRenaming(null);
     setCreating(false);
-  }, [sku, path]);
+  };
   useEffect(() => {
     let live = true;
     api.listDir({ sku, path }).then(
@@ -134,7 +135,7 @@ export function FileExplorer({ sku, t }: { sku: string; t: T }) {
   const selPaths = sel.map((e) => e.path);
 
   const open = (e: FileEntry) =>
-    e.isDir ? setPath(e.path) : run(() => api.openPath({ sku, path: e.path }));
+    e.isDir ? go(e.path) : run(() => api.openPath({ sku, path: e.path }));
   const openSelected = () => sel.forEach((e) => (!e.isDir || sel.length === 1) && open(e));
   const startRename = () => selPaths.length === 1 && setRenaming(selPaths[0]);
   const trash = () => {
@@ -309,7 +310,7 @@ export function FileExplorer({ sku, t }: { sku: string; t: T }) {
                   className={`rounded px-1.5 py-1 hover:bg-hover ${last ? "font-medium text-ink" : ""} ${
                     over === p ? dropHi : ""
                   }`}
-                  onClick={() => setPath(p)}
+                  onClick={() => go(p)}
                   {...dropProps(p)}
                 >
                   {name}

@@ -359,7 +359,9 @@ function Migration({
   const [error, setError] = useState<string | null>(null);
   const done = backup !== null;
   const app = `v${db.appVersion}`;
-  const plannedBackup = `db.backup-v${db.dbVersion}-${new Date().toISOString().slice(0, 10)}.sqlite`;
+  const [plannedBackup] = useState(
+    () => `db.backup-v${db.dbVersion}-${new Date().toISOString().slice(0, 10)}.sqlite`,
+  );
 
   const run = async () => {
     setBusy(true);

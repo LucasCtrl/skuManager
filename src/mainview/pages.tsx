@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { STATUSES, type Lang, type Product, type Status, type StatusChange } from "../shared/rpc";
 import { FileExplorer } from "./explorer/FileExplorer";
 import { fmtDateTime, fmtDay, fmtRelative, useT } from "./i18n";
@@ -170,10 +170,13 @@ export function ProductPage({ id, lang }: { id: number; lang: Lang }) {
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
 
-  const load = () => api.getProduct({ id }).then(setData, (e) => setError(errMsg(e)));
+  const load = useCallback(
+    () => api.getProduct({ id }).then(setData, (e) => setError(errMsg(e))),
+    [id],
+  );
   useEffect(() => {
     load();
-  }, [id]);
+  }, [load]);
 
   if (error)
     return (

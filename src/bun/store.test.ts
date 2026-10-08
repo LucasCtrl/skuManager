@@ -19,7 +19,11 @@ test("versions", () => {
 test("init, sku numbering, history, files", () => {
   const dir = mkdtempSync(join(tmpdir(), "sku-"));
   expect(store.openFolder(dir).kind).toBe("ready");
-  expect(store.inspectFolder(dir)).toMatchObject({ hasDb: true, products: 0, dbVersion: APP_VERSION });
+  expect(store.inspectFolder(dir)).toMatchObject({
+    hasDb: true,
+    products: 0,
+    dbVersion: APP_VERSION,
+  });
   expect(store.skuOf(store.nextId())).toBe("EK-PRD_00001");
   const a = store.createProduct(" Cable ", "red");
   expect(a.sku).toBe("EK-PRD_00001");

@@ -12,11 +12,15 @@ Desktop app to create product SKUs and keep each product's files in its own fold
 
 Download the installer for your system from the [latest release](../../releases/latest).
 
-| System  | File                                |
-| ------- | ----------------------------------- |
-| Windows | `windows-x64-SKUManager-Setup.*`    |
-| macOS   | `macos-arm64-SKUManager-Setup.*`    |
-| Linux   | `linux-x64-SKUManager-Setup.tar.gz` |
+| System  | File                                                           |
+| ------- | -------------------------------------------------------------- |
+| Windows | `win-x64-SKUManager-Setup.zip` (unzip, run the installer)      |
+| macOS   | `macos-arm64-SKUManager.dmg`                                   |
+| Linux   | `linux-x64-SKUManager-Setup.tar.gz` (extract, run `installer`) |
+
+The other files (`stable-*.tar.zst`, `*-update.json`) are for in-app updates and can be ignored.
+
+To update, run the new installer: it replaces the app and keeps your settings and data.
 
 - **macOS:** builds are not signed. The first time, right-click the app and choose **Open**.
 - **Linux:** needs WebKitGTK (`libwebkit2gtk-4.1`), which most desktops already have.

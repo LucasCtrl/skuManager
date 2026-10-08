@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch: # manual run: builds and keeps the installers as workflow artifacts only
+
+permissions:
+  contents: write # upload installers to the release
+
+env:
+  # Keep in sync with hutch.config.ts (and the checksums in .github/actions/setup-hutch).
+  ELECTROBUN_VERSION: 2.0.2
+  HUTCH_VERSION: 0.27.1
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tag matches APP_VERSION
+        if: github.event_name == 'release'
+        run: |
+          version=$(grep -oE '[0-9]+\.[0-9]+\.[0-9]+' src/shared/version.ts)
+          if [ "${{ github.event.release.tag_name }}" != "v$version" ]; then
+            echo "::error::Release tag ${{ github.event.release.tag_name }} does not match APP_VERSION v$version"
+            exit 1
+          fi
+
+      - uses: ./.github/actions/setup-hutch
+      - uses: oven-sh/setup-bun@v2
+      - run: hutch install --frozen-lockfile
+      - run: hutch electrobun prepare # devkit types for typecheck
+      - run: hutch run fmt:check
+      - run: hutch run lint
+      - run: hutch run typecheck
+      - run: hutch run test
+
+  build:
+    needs: check
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest] # macos-latest is Apple Silicon
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4 # Vite runs on Node
+        with:
+          node-version: 22
+      - uses: ./.github/actions/setup-hutch
+      - run: hutch install --frozen-lockfile
+      - run: hutch run build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sku-manager-${{ runner.os }}
+          path: artifacts/*
+          if-no-files-found: error
+
+      - name: Attach to release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" artifacts/* --clobber

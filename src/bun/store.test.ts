@@ -6,6 +6,7 @@ import { join } from "node:path";
 import * as store from "./store";
 import * as files from "./files";
 import { compareVersions } from "./db/version";
+import { APP_VERSION } from "../shared/version";
 import { migrations } from "./db/migrations";
 import { readdirSync } from "node:fs";
 
@@ -18,7 +19,7 @@ test("versions", () => {
 test("init, sku numbering, history, files", () => {
   const dir = mkdtempSync(join(tmpdir(), "sku-"));
   expect(store.openFolder(dir).kind).toBe("ready");
-  expect(store.inspectFolder(dir)).toMatchObject({ hasDb: true, products: 0, dbVersion: "1.0.0" });
+  expect(store.inspectFolder(dir)).toMatchObject({ hasDb: true, products: 0, dbVersion: APP_VERSION });
   expect(store.skuOf(store.nextId())).toBe("EK-PRD_00001");
   const a = store.createProduct(" Cable ", "red");
   expect(a.sku).toBe("EK-PRD_00001");
@@ -59,17 +60,17 @@ test("init, sku numbering, history, files", () => {
     d.run("UPDATE meta SET value = ? WHERE key = 'version'", [v]);
     d.close();
   };
-  set("0.9.0");
+  set("0.0.0");
   expect(store.openFolder(dir).kind).toBe("needsMigration");
-  migrations.length = 0; // schema is already 1.0.0, only the version bump + backup are under test
+  migrations.length = 0; // schema is already current, only the version bump + backup are under test
   const m = store.migrate();
   expect(m.state.kind).toBe("ready");
-  expect(m.backup).toStartWith("db.backup-v0.9.0-");
+  expect(m.backup).toStartWith("db.backup-v0.0.0-");
   expect(store.lastBackup()).not.toBeNull();
   store.backup();
   expect(store.backup()).toEndWith("-2.sqlite"); // same version and day → suffixed
-  expect(readdirSync(dir).some((f) => f.startsWith("db.backup-v0.9.0-"))).toBe(true);
-  expect(store.dbVersion()).toBe("1.0.0");
+  expect(readdirSync(dir).some((f) => f.startsWith("db.backup-v0.0.0-"))).toBe(true);
+  expect(store.dbVersion()).toBe(APP_VERSION);
   store.close();
   set("9.0.0");
   expect(store.openFolder(dir).kind).toBe("appOutdated");

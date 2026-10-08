@@ -2,7 +2,7 @@
 // Keep in sync with schema.ts. Never edit a released migration: add a new one.
 export const migrations: { version: string; sql: string }[] = [
   {
-    version: "1.0.0",
+    version: "0.0.1",
     sql: `
 CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE TABLE products (

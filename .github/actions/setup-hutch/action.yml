@@ -1,0 +1,24 @@
+name: Setup Hutch
+description: >
+  Install the Hutch launcher paired with Electrobun, as the `electrobun` npm bootstrap does.
+  Checksums come from the Electrobun release's hutch-artifacts.json; update them with the versions.
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        set -euo pipefail
+        case "${RUNNER_OS}-${RUNNER_ARCH}" in
+          Linux-X64)   key=linux-x64;   sha=ed64b3d3f3d38d3ab04a8d178b9883571a7d62d5100b8143a89da597dc8e8d21 ;;
+          Linux-ARM64) key=linux-arm64; sha=ff3c08044fb73403455c3b25553a3033ab81e3afad9e8b8aaa8d6f791bb99376 ;;
+          macOS-ARM64) key=macos-arm64; sha=5478ebc6ea25e93b12964615956f8a1cbaf38b9e7da38850e20e1c6aa5022e2b ;;
+          Windows-X64) key=windows-x64; sha=1a9abc72f5eced8e324353caf855e18d1e3ae891574cf32bb20b5c32e4f93cdd ;;
+          *) echo "::error::No Hutch build for ${RUNNER_OS}-${RUNNER_ARCH}"; exit 1 ;;
+        esac
+        cd "$RUNNER_TEMP"
+        curl -fsSL -o hutch.tar.gz \
+          "https://github.com/blackboardsh/electrobun/releases/download/v${ELECTROBUN_VERSION}/electrobun-hutch-${key}.tar.gz"
+        actual=$(openssl dgst -sha256 -r hutch.tar.gz | cut -d' ' -f1)
+        if [ "$actual" != "$sha" ]; then echo "::error::Hutch checksum mismatch ($actual)"; exit 1; fi
+        tar xzf hutch.tar.gz
+        echo "$RUNNER_TEMP/hutch-v${HUTCH_VERSION}-${key}/bin" >> "$GITHUB_PATH"

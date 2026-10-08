@@ -31,7 +31,7 @@ On first launch, choose a data folder. Pick an empty folder to start fresh, or a
 │   ├── EK-PRD_00001/   ← one folder per SKU, your files go here
 │   └── EK-PRD_00002/
 ├── db.sqlite           ← products, status history, database version
-└── db.backup-v1.0.0-2026-10-08.sqlite   ← backups (Settings → Back up now)
+└── db.backup-v0.0.1-2026-10-08.sqlite   ← backups (Settings → Back up now)
 ```
 
 The data folder holds a SQLite database, which is not safe for several people to edit at once. Use it from one computer at a time.

@@ -102,6 +102,6 @@ Bun, Typescript, OXC (linter, formatter), sqlite, drizzle
 - Product list: status badge + filter chips (All / In development / Active / Retired).
 - File explorer v1: browse, new folder, rename, delete (to OS trash), duplicate, multi-select, internal drag-and-drop move, drag-in from OS, double-click opens with default app, "Show in system explorer". OS clipboard Ctrl+C/V deferred.
 - Migration: popup explains, on confirm auto-copy `db.sqlite` → `db.backup-<version>-<date>.sqlite`, then migrate.
-- Settings: change data folder, app/DB version (read-only), theme light/dark, manual DB backup, language.
+- Settings: change data folder, app/DB version (read-only), theme follow system/light/dark, manual DB backup, language.
 - UI language: English + French (i18n).
 - Chosen data folder path is stored in the per-user app config dir (not in the data folder).

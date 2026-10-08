@@ -27,7 +27,7 @@ function entry(sku: string, abs: string): FileEntry {
     name: basename(abs),
     path: toRel(sku, abs),
     isDir: s.isDirectory(),
-    size: s.size,
+    size: s.isDirectory() ? readdirSync(abs).length : s.size,
     mtime: s.mtimeMs,
   };
 }

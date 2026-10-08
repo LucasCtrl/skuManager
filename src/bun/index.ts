@@ -58,26 +58,43 @@ const rpc = BrowserView.defineRPC<AppRPC>({
         saveSettings();
         return settings;
       },
-      chooseDataFolder: async () => {
+      defaultFolder: () => settings.dataFolder ?? join(Utils.paths.documents, "EK-Data"),
+      pickFolder: async ({ start }) => {
         const [dir] = await Utils.openFileDialog({
-          startingFolder: settings.dataFolder ?? Utils.paths.documents,
+          startingFolder: start ?? Utils.paths.documents,
           canChooseFiles: false,
           canChooseDirectory: true,
           allowsMultipleSelection: false,
         });
-        if (!dir) return store.getState(); // cancelled
-        const state = store.openFolder(dir);
+        return dir || null;
+      },
+      inspectFolder: ({ path }) => store.inspectFolder(path),
+      openDataFolder: ({ path }) => {
+        const state = store.openFolder(path);
         if (state.kind !== "error") {
-          settings.dataFolder = dir;
+          settings.dataFolder = path;
           saveSettings();
         }
         return state;
       },
+      revealDataFolder: () => {
+        const dir = store.dataFolder();
+        if (dir) Utils.openPath(dir);
+      },
       getDbState: () => store.getState(),
       migrate: () => store.migrate(),
       backupDb: () => store.backup(),
-      getVersions: () => ({ app: APP_VERSION, db: store.dbVersion() }),
+      getInfo: () => ({
+        app: APP_VERSION,
+        db: store.dbVersion(),
+        dataFolder: store.dataFolder(),
+        lastBackup: store.lastBackup(),
+      }),
+      quit: () => {
+        Utils.quit();
+      },
 
+      nextSku: () => store.skuOf(store.nextId()),
       listProducts: ({ query, status }) => store.listProducts(query, status),
       getProduct: ({ id }) => store.getProduct(id),
       createProduct: ({ name, description }) => store.createProduct(name, description),

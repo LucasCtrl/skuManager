@@ -119,3 +119,9 @@ Electrobun 2 uses the Hutch toolchain (`~/.hutch/bin` on PATH); the main process
 - `src/bun/` — main process: `store.ts` (data folder, db, versions, products), `files.ts` (product folder ops, path guard), `db/` (drizzle schema + SQL migrations), `index.ts` (settings, RPC handlers, localhost upload server for OS drag-in)
 - `src/mainview/` — React UI: `App.tsx` (shell, db gate, settings), `pages.tsx` (list, product), `ui.tsx`, `i18n.ts`, `explorer/`
 - Bumping the version: change `APP_VERSION`; if the schema changes, add an entry to `src/bun/db/migrations.ts` and update `schema.ts`.
+
+# Design
+- Source: claude.ai/design project `e70d7491-8321-4fdb-814a-234704263591` (one `.dc.html` per screen).
+- Colours are CSS variables in `src/mainview/index.css` (light from the design, dark derived), exposed as Tailwind colours (`bg-surface`, `text-muted`, `bg-accent`…). Don't use raw hex or `dark:` variants in components.
+- IBM Plex Sans/Mono are bundled via `@fontsource` (the app must work offline).
+- Shared pieces (buttons, fields, icons, Modal, status badge, product dialogs) live in `src/mainview/ui.tsx`.

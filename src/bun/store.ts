@@ -2,10 +2,10 @@
 import { Database } from "bun:sqlite";
 import { drizzle, type BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 import { and, asc, desc, eq, like, or, sql } from "drizzle-orm";
-import { mkdirSync, readdirSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { APP_VERSION } from "../shared/version";
-import type { DbState, Product, Status, StatusChange } from "../shared/rpc";
+import type { DbState, FolderInfo, Product, Status, StatusChange } from "../shared/rpc";
 import { STATUSES } from "../shared/rpc";
 import { products, statusHistory } from "./db/schema";
 import { migrations } from "./db/migrations";
@@ -96,21 +96,53 @@ export function openFolder(dir: string): DbState {
   return state;
 }
 
-// Consistent copy of the live db next to it. Returns the backup path.
+const BACKUP_RE = /^db\.backup-.*\.sqlite$/;
+
+// Consistent copy of the live db next to it: db.backup-v<version>-<YYYY-MM-DD>[-n].sqlite. Returns the file name.
 export function backup(): string {
   if (!sqlite || !folder) throw new Error("No database open");
-  const stamp = now().replace(/[:.]/g, "-");
-  const path = join(folder, `db.backup-v${dbVersion()}-${stamp}.sqlite`);
-  sqlite.run("VACUUM INTO ?", [path]);
-  return path;
+  const base = `db.backup-v${dbVersion()}-${now().slice(0, 10)}`;
+  let name = `${base}.sqlite`;
+  for (let i = 2; existsSync(join(folder, name)); i++) name = `${base}-${i}.sqlite`;
+  sqlite.run("VACUUM INTO ?", [join(folder, name)]);
+  return name;
 }
 
-export function migrate(): DbState {
-  if (state.kind !== "needsMigration") return state;
-  backup();
+// mtime (ms) of the newest backup file, or null.
+export function lastBackup(): number | null {
+  if (!folder) return null;
+  const times = readdirSync(folder)
+    .filter((f) => BACKUP_RE.test(f))
+    .map((f) => statSync(join(folder!, f)).mtimeMs);
+  return times.length ? Math.max(...times) : null;
+}
+
+export function migrate(): { state: DbState; backup: string } {
+  if (state.kind !== "needsMigration") throw new Error("No migration needed");
+  const name = backup();
   runMigrations(state.dbVersion);
   state = { kind: "ready" };
-  return state;
+  return { state, backup: name };
+}
+
+export const dataFolder = () => folder;
+
+// Read-only look at a folder before opening it. Never creates or changes anything.
+export function inspectFolder(dir: string): FolderInfo {
+  const info: FolderInfo = { path: dir, hasDb: false, products: null, dbVersion: null };
+  const file = join(dir, "db.sqlite");
+  if (!existsSync(file)) return info;
+  info.hasDb = true;
+  let d: Database | null = null;
+  try {
+    d = new Database(file, { readonly: true });
+    info.dbVersion =
+      d.query<{ value: string }, []>("SELECT value FROM meta WHERE key = 'version'").get()?.value ??
+      null;
+    info.products = d.query<{ n: number }, []>("SELECT count(*) AS n FROM products").get()!.n;
+  } catch {} // not ours or broken: openFolder reports the real error
+  d?.close();
+  return info;
 }
 
 // ---------- products ----------
@@ -152,20 +184,25 @@ function cleanName(name: string) {
 }
 
 // Next number is above both the db and any existing EK-PRD_xxxxx folder, so a SKU is never reassigned.
+export function nextId(): number {
+  const maxDb = ready()
+    .select({ m: sql<number>`coalesce(max(${products.id}), 0)` })
+    .from(products)
+    .get()!.m;
+  const maxDir = Math.max(
+    0,
+    ...readdirSync(productsDir()).map((f) => Number(SKU_RE.exec(f)?.[1] ?? 0)),
+  );
+  const id = Math.max(maxDb, maxDir) + 1;
+  if (id > 99999) throw new Error("No SKU numbers left (EK-PRD_99999 reached)");
+  return id;
+}
+
 export function createProduct(name: string, description: string): Product {
   const d = ready();
   const n = cleanName(name);
   return d.transaction((tx) => {
-    const maxDb = tx
-      .select({ m: sql<number>`coalesce(max(${products.id}), 0)` })
-      .from(products)
-      .get()!.m;
-    const maxDir = Math.max(
-      0,
-      ...readdirSync(productsDir()).map((f) => Number(SKU_RE.exec(f)?.[1] ?? 0)),
-    );
-    const id = Math.max(maxDb, maxDir) + 1;
-    if (id > 99999) throw new Error("No SKU numbers left (EK-PRD_99999 reached)");
+    const id = nextId(); // same connection, so this read is inside the transaction
     const t = now();
     const p: Product = {
       id,

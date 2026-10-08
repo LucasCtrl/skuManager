@@ -27,7 +27,23 @@ export type DbState =
   | { kind: "needsMigration"; dbVersion: string; appVersion: string }
   | { kind: "error"; message: string };
 
+// What a folder holds before it is opened (first-run screen).
+export type FolderInfo = {
+  path: string;
+  hasDb: boolean;
+  products: number | null;
+  dbVersion: string | null;
+};
+
+export type AppInfo = {
+  app: string;
+  db: string | null;
+  dataFolder: string | null;
+  lastBackup: number | null;
+};
+
 // `path` values are always relative to the product folder, "/"-separated, "" = folder root.
+// `size` is bytes for files and the number of entries for folders.
 export type FileEntry = { name: string; path: string; isDir: boolean; size: number; mtime: number };
 
 type Req<P, R> = { params: P; response: R };
@@ -37,14 +53,20 @@ export type AppRPC = {
     requests: {
       getSettings: Req<{}, Settings>;
       setSettings: Req<Partial<Omit<Settings, "dataFolder">>, Settings>;
-      chooseDataFolder: Req<{}, DbState>; // opens native folder picker
+      defaultFolder: Req<{}, string>; // suggestion for first run
+      pickFolder: Req<{ start: string | null }, string | null>; // native picker, null = cancelled
+      inspectFolder: Req<{ path: string }, FolderInfo>;
+      openDataFolder: Req<{ path: string }, DbState>; // remembered in settings unless it fails
+      revealDataFolder: Req<{}, void>;
       getDbState: Req<{}, DbState>;
-      migrate: Req<{}, DbState>; // backs up db.sqlite then migrates
+      migrate: Req<{}, { state: DbState; backup: string }>; // backs up db.sqlite then migrates
       backupDb: Req<{}, string>; // returns backup file path
-      getVersions: Req<{}, { app: string; db: string | null }>;
+      getInfo: Req<{}, AppInfo>;
+      quit: Req<{}, void>;
 
       listProducts: Req<{ query: string; status: Status | null }, Product[]>;
       getProduct: Req<{ id: number }, { product: Product; history: StatusChange[] }>;
+      nextSku: Req<{}, string>;
       createProduct: Req<{ name: string; description: string }, Product>;
       updateProduct: Req<
         { id: number; name: string; description: string; status: Status },

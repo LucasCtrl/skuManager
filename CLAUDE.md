@@ -14,7 +14,8 @@ Each SKU can have the following status:
 
 - `In development`: Product that is currently being worked on,
 - `Active`: Product that can be produced, sold, ...,
-- `Retired`: Product that is now retired and now longer relevant.
+- `Retired`: Product that is now retired and now longer relevant,
+- `Research`: Research project (calibration programs, experiments, ...) that is not a product to manufacture/sell.
 
 When a product is created, the status is set to `In development` by default. That mean the product is not ready to be manufactured/sold yet.
 The user can then choose to set the status to `Active` or `Retired`.
@@ -120,10 +121,10 @@ Bun, Typescript, OXC (linter, formatter), sqlite, drizzle
 - Desktop shell: Electrobun (Bun main process + system webview). UI: React.
 - Targets: Windows, Linux, macOS. Single user only (no shared/network folder support).
 - SKU ID: sequential, `max(id) + 1`, starting at `00001`. Never reused (Retired keeps its number).
-- Status values: `In development` (default), `Active`, `Retired`.
+- Status values: `In development` (default), `Active`, `Retired`, `Research`.
 - Product fields: SKU, name (required, not unique), description (optional), status, created_at, updated_at.
 - Status history table: logs every status change with a timestamp.
-- Product list: status badge + filter chips (All / In development / Active / Retired).
+- Product list: status badge + filter chips (All / In development / Active / Retired / Research).
 - File explorer v1: browse, new folder, rename, delete (to OS trash), duplicate, multi-select, internal drag-and-drop move, drag-in from OS, double-click opens with default app, "Open in system explorer" (opens the current folder; "Show in system explorer" on a selected item highlights it). OS clipboard Ctrl+C/V deferred.
 - Migration: popup explains, on confirm auto-copy `db.sqlite` → `db.backup-<version>-<date>.sqlite`, then migrate.
 - Settings: change data folder, app/DB version (read-only), theme follow system/light/dark, manual DB backup, language.

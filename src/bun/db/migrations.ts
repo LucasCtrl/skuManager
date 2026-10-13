@@ -23,4 +23,23 @@ CREATE TABLE status_history (
 CREATE INDEX status_history_product ON status_history(product_id);
 `,
   },
+  {
+    // Adds the 'Research' status. SQLite cannot alter a CHECK, so the table is rebuilt.
+    // Migrations run with foreign keys off (see runMigrations), so status_history is untouched.
+    version: "0.0.2",
+    sql: `
+CREATE TABLE products_new (
+	id INTEGER PRIMARY KEY,
+	sku TEXT NOT NULL UNIQUE,
+	name TEXT NOT NULL,
+	description TEXT NOT NULL DEFAULT '',
+	status TEXT NOT NULL CHECK (status IN ('In development', 'Active', 'Retired', 'Research')),
+	created_at TEXT NOT NULL,
+	updated_at TEXT NOT NULL
+);
+INSERT INTO products_new SELECT id, sku, name, description, status, created_at, updated_at FROM products;
+DROP TABLE products;
+ALTER TABLE products_new RENAME TO products;
+`,
+  },
 ];

@@ -16,6 +16,34 @@ test("versions", () => {
   expect(compareVersions("1.0.2", "2.0.0")).toBeLessThan(0);
 });
 
+test("0.0.1 db migrates to the Research status and keeps its data", () => {
+  const dir = mkdtempSync(join(tmpdir(), "sku-"));
+  const d = new Database(join(dir, "db.sqlite"));
+  d.exec(migrations[0].sql);
+  d.exec(`
+INSERT INTO meta VALUES ('version', '0.0.1');
+INSERT INTO products VALUES (3, 'EK-PRD_00003', 'Cable', '', 'Active', 't', 't');
+INSERT INTO status_history (product_id, status, changed_at) VALUES (3, 'In development', 't'), (3, 'Active', 't');
+`);
+  d.close();
+  expect(store.openFolder(dir).kind).toBe("needsMigration");
+  expect(store.migrate().state.kind).toBe("ready");
+  expect(store.updateProduct(3, "Cable", "", "Research").status).toBe("Research");
+  expect(store.getProduct(3).history.map((h) => h.status)).toEqual([
+    "In development",
+    "Active",
+    "Research",
+  ]);
+  expect(() => store.updateProduct(3, "Cable", "", "Nope" as never)).toThrow();
+  store.close();
+  const check = new Database(join(dir, "db.sqlite"));
+  expect(check.query("PRAGMA foreign_key_check").all()).toEqual([]);
+  expect(check.query("SELECT sql FROM sqlite_master WHERE name = 'status_history'").get()).toEqual({
+    sql: expect.stringContaining("REFERENCES products(id)"),
+  });
+  check.close();
+});
+
 test("init, sku numbering, history, files", () => {
   const dir = mkdtempSync(join(tmpdir(), "sku-"));
   expect(store.openFolder(dir).kind).toBe("ready");

@@ -47,13 +47,21 @@ function setDbVersion(tx: Database) {
 
 function runMigrations(from: string) {
   const s = sqlite!;
-  s.transaction(() => {
-    for (const m of migrations) {
-      if (compareVersions(m.version, from) > 0 && compareVersions(m.version, APP_VERSION) <= 0)
-        s.exec(m.sql);
-    }
-    setDbVersion(s);
-  })();
+  // Off so a migration can rebuild a table; the pragma is a no-op inside a transaction.
+  s.exec("PRAGMA foreign_keys = OFF");
+  try {
+    s.transaction(() => {
+      for (const m of migrations) {
+        if (compareVersions(m.version, from) > 0 && compareVersions(m.version, APP_VERSION) <= 0)
+          s.exec(m.sql);
+      }
+      if (s.query("PRAGMA foreign_key_check").all().length)
+        throw new Error("Migration broke foreign keys"); // rolls back
+      setDbVersion(s);
+    })();
+  } finally {
+    s.exec("PRAGMA foreign_keys = ON");
+  }
 }
 
 export function close() {

@@ -31,6 +31,8 @@ const tokens = [
   "active-fg",
   "retired-bg",
   "retired-fg",
+  "research-bg",
+  "research-fg",
   "scrim",
 ];
 

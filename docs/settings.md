@@ -12,5 +12,6 @@ Settings:
 - Theme: follow system, light or dark.
 - Manual database backup.
 - Language.
+- Currency (not implemented yet): a single currency applied to every raw material and purchased part price. See [materials-parts.md](materials-parts.md).
 
 The UI is in English and French (i18n).

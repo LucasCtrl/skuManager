@@ -29,7 +29,7 @@ A status history table logs every status change with a timestamp.
 
 ## Product list
 
-Shown when the application opens.
+Shown when the application opens. See [navigation.md](navigation.md).
 
 - A search bar at the top. It searches the SKU, name and description, and the list refreshes while the user types.
 - To the right of the search bar, a button to create a new product.

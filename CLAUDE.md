@@ -8,6 +8,7 @@ The specification is split by feature in `docs/`. Do not read all of it: read on
 | ------------------------------------------------------------- | ---------------------------------------------- |
 | SKU format, status, product list, creating/viewing/editing    | [docs/products.md](docs/products.md)           |
 | Raw materials and purchased parts (spec, not implemented yet) | [docs/materials-parts.md](docs/materials-parts.md) |
+| Header, links between pages                                   | [docs/navigation.md](docs/navigation.md)       |
 | Data folder, first launch, `1_PRODUCTS`, `db.sqlite`          | [docs/data-folder.md](docs/data-folder.md)     |
 | App/database versions, migration, backup, bumping the version | [docs/versions.md](docs/versions.md)           |
 | File explorer on the product page                             | [docs/file-explorer.md](docs/file-explorer.md) |

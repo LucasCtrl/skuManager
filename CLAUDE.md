@@ -124,7 +124,7 @@ Bun, Typescript, OXC (linter, formatter), sqlite, drizzle
 - Product fields: SKU, name (required, not unique), description (optional), status, created_at, updated_at.
 - Status history table: logs every status change with a timestamp.
 - Product list: status badge + filter chips (All / In development / Active / Retired).
-- File explorer v1: browse, new folder, rename, delete (to OS trash), duplicate, multi-select, internal drag-and-drop move, drag-in from OS, double-click opens with default app, "Show in system explorer". OS clipboard Ctrl+C/V deferred.
+- File explorer v1: browse, new folder, rename, delete (to OS trash), duplicate, multi-select, internal drag-and-drop move, drag-in from OS, double-click opens with default app, "Open in system explorer" (opens the current folder; "Show in system explorer" on a selected item highlights it). OS clipboard Ctrl+C/V deferred.
 - Migration: popup explains, on confirm auto-copy `db.sqlite` → `db.backup-<version>-<date>.sqlite`, then migrate.
 - Settings: change data folder, app/DB version (read-only), theme follow system/light/dark, manual DB backup, language.
 - UI language: English + French (i18n).

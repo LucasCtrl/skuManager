@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 import type {
   AppInfo,
   DbState,
@@ -869,6 +869,31 @@ function PricesSection() {
 
 const TABS = LISTS.filter((l) => l !== "unit");
 
+// Short-code examples shown under the form, per tab.
+const HINTS: Record<string, [string, string][]> = {
+  seller: [
+    ["L'acrylic", "LACRY"],
+    ["Bossard", "BSSRD"],
+  ],
+  materialType: [
+    ["PMMA", "PMMA"],
+    ["Plywood", "PLY"],
+  ],
+  partType: [
+    ["Screw", "SCRW"],
+    ["Cardboard box", "BOX"],
+  ],
+  colour: [
+    ["Yellow", "YEL"],
+    ["Light blue", "LBLU"],
+    ["Orange", "ORNG"],
+  ],
+  finish: [
+    ["Transparent", "TRS"],
+    ["Opaque", "OPQ"],
+  ],
+};
+
 function ListsSection() {
   const t = useT();
   const { entries, load } = useEntries();
@@ -987,7 +1012,16 @@ function ListsSection() {
           <p className="m-0 text-[13px] leading-normal text-muted">
             <Rich
               text={t("lists.hint")}
-              vars={{ a: <Code>L'acrylic → LACRY</Code>, b: <Code>Bossard → BSSRD</Code> }}
+              vars={{
+                examples: HINTS[tab].map(([n, c], i) => (
+                  <Fragment key={c}>
+                    {i > 0 && ", "}
+                    <Code>
+                      {n} → {c}
+                    </Code>
+                  </Fragment>
+                )),
+              }}
             />
           </p>
           <ErrorText error={error} />

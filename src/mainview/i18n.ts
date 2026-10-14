@@ -181,7 +181,7 @@ const en = {
   "lists.codePh.colour": "WHT",
   "lists.codePh.finish": "SAT",
   "lists.hint":
-    "Prefer a short code to the full name: {a}, {b}. Letters, digits and dots only, in upper case.",
+    "Prefer a short code to the full name: {examples}. Letters, digits and dots only, in upper case.",
   "items.title.material": "Materials",
   "items.title.part": "Purchased parts",
   "items.count.material": "{n} materials",
@@ -439,7 +439,7 @@ const fr: Record<Key, string> = {
   "lists.codePh.colour": "BLC",
   "lists.codePh.finish": "SAT",
   "lists.hint":
-    "Préférez un code court au nom complet : {a}, {b}. Lettres, chiffres et points uniquement, en majuscules.",
+    "Préférez un code court au nom complet : {examples}. Lettres, chiffres et points uniquement, en majuscules.",
   "items.title.material": "Matières",
   "items.title.part": "Pièces achetées",
   "items.count.material": "{n} matières",

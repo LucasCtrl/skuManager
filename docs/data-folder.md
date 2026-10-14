@@ -5,7 +5,7 @@ Code: `src/bun/store.ts` (open, inspect), `src/bun/index.ts` (settings), first-r
 When the app opens for the first time, the user selects the folder where the data is stored. It contains:
 
 - `1_PRODUCTS/`: each time a product SKU is created, the app creates a folder here named after the SKU.
-- `2_PARTS/` (not implemented yet): same, for manufactured parts SKUs.
+- `2_PARTS/` (reserved for a future release): same, for manufactured part SKUs. Not specified yet.
 - `3_MATERIALS/` (not implemented yet): same, for raw material SKUs. See [materials-parts.md](materials-parts.md).
 - `4_PARTS/` (not implemented yet): same, for purchased part SKUs.
 - `db.sqlite`: SQLite database with every product, raw material and purchased part detail (SKU, name, description, status, …) and the application version.

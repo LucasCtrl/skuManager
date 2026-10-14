@@ -4,15 +4,15 @@ Code: `Header` and the `Page` state in `src/mainview/App.tsx`.
 
 ## Pages
 
-| Page           | Opened from                                 | Spec                                     |
-| -------------- | ------------------------------------------- | ---------------------------------------- |
-| Product list   | App start, `Products` header link           | [products.md](products.md)               |
-| Product page   | A row of the product list, product creation | [products.md](products.md)               |
-| Materials list | `Materials` header link                     | [materials-parts.md](materials-parts.md) |
-| Material page  | A row of the materials list, material creation | [materials-parts.md](materials-parts.md) |
-| Parts list     | `Parts` header link                         | [materials-parts.md](materials-parts.md) |
-| Part page      | A row of the parts list, part creation      | [materials-parts.md](materials-parts.md) |
-| Settings       | Settings icon in the header                 | [settings.md](settings.md)               |
+| Page                 | Opened from                                                | Spec                                     |
+| -------------------- | ---------------------------------------------------------- | ---------------------------------------- |
+| Product list         | App start, `Products` header link                          | [products.md](products.md)               |
+| Product page         | A row of the product list, product creation                | [products.md](products.md)               |
+| Materials list       | `Materials` header link                                    | [materials-parts.md](materials-parts.md) |
+| Material page        | A row of the materials list, material creation             | [materials-parts.md](materials-parts.md) |
+| Purchased parts list | `Purchased parts` header link                              | [materials-parts.md](materials-parts.md) |
+| Purchased part page  | A row of the purchased parts list, purchased part creation | [materials-parts.md](materials-parts.md) |
+| Settings             | Settings icon in the header                                | [settings.md](settings.md)               |
 
 The materials and parts pages are not implemented yet.
 
@@ -31,7 +31,8 @@ Current behaviour:
 Planned, with raw materials and purchased parts:
 
 - The same header is shown on every page.
-- It has three links: `Products`, `Parts`, `Materials`. Each opens the corresponding list.
+- It has the links `Products`, `Materials`, `Purchased parts`. Each opens the corresponding list.
+- A `Parts` link (manufactured parts, `2_PARTS/`) is added in a future release, separate from `Purchased parts`.
 - The link of the current list is highlighted. A product, material or part page highlights the link of its list.
 - The settings icon is always visible, including on the settings page.
 - The back button is removed: the links replace it.

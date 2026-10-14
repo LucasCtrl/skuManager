@@ -2,13 +2,15 @@
 
 Not implemented yet. This file is the specification to build from.
 
-Raw materials (filament, sheets, …) and purchased parts (screws, standoffs, feet, …) follow the same rules. They differ only in their SKU prefix, their data folder and their specification fields. "Item" below means either one.
+Raw materials (filament, sheets, …) and purchased parts (screws, standoffs, feet, …) follow the same rules. Manufactured parts (`2_PARTS/`) are a separate, future feature and are not covered here.
+
+Out of scope for now: linking materials and parts to the products that use them (bill of materials). Planned later; don't design the schema in a way that prevents it. They differ only in their SKU prefix, their data folder and their specification fields. "Item" below means either one.
 
 |                | Raw material                        | Purchased part                                                   |
 | -------------- | ----------------------------------- | ---------------------------------------------------------------- |
 | SKU prefix     | `EK-MAT_`                           | `EK-PRT_`                                                        |
 | Data folder    | `3_MATERIALS/`                      | `4_PARTS/`                                                       |
-| List           | Materials list                      | Parts list                                                       |
+| List           | Materials list                      | Purchased parts list                                             |
 | Type examples  | PLA, PMMA, PETG                     | Screw, standoff, feet                                            |
 | Specifications | Colour, thickness or weight, finish | Multiple specifications field (`M3x50`, `Male-Female`, `8x2`, …) |
 
@@ -97,11 +99,11 @@ The app builds `[SPECS]` from the specification fields; the user does not type i
 - `Active`: the item is in use. Default at creation.
 - `Retired`: the item is no longer bought or used.
 
-The user can set the status to `Active` or `Retired` at any time. `Retired` keeps an archive: the user can still read the item's data or re-activate it, and the SKU is not deleted or reassigned.
+The user can change the status at any time, in either direction. `Retired` keeps an archive: the user can still read the item's data or re-activate it, and the SKU is not deleted or reassigned.
 
 A status history table logs every status change with a timestamp.
 
-## Materials list and parts list
+## Materials list and purchased parts list
 
 Two separate lists, one for raw materials and one for purchased parts. Each works like the product list (see [products.md](products.md)).
 
@@ -112,7 +114,7 @@ Two separate lists, one for raw materials and one for purchased parts. Each work
 
 ## Navigation
 
-The header links to the materials list and the parts list. See [navigation.md](navigation.md).
+The header links to the materials list and the purchased parts list (`Purchased parts`, separate from the future `Parts` link for manufactured parts). See [navigation.md](navigation.md).
 
 ## Creating an item
 

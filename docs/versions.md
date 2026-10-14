@@ -20,7 +20,7 @@ The version is stored in the database, so the app can check that the database ma
 
 ## Migration
 
-A popup explains what will happen. On confirm, the app copies `db.sqlite` to `db.backup-<version>-<date>.sqlite`, then migrates.
+A popup explains what will happen. On confirm, the app copies `db.sqlite` to `db.backup-v<version>-<YYYY-MM-DD>.sqlite` (`-2`, `-3`, … appended if that name exists), then migrates.
 
 ## Bumping the version
 

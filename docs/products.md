@@ -11,7 +11,9 @@ EK-PRD_[ID5]
 `[ID5]` is a 5-digit number, unique per product.
 
 - Sequential: `max(id) + 1`, starting at `00001`.
+- The next number is above both the highest id in the database and the highest `EK-PRD_` folder in `1_PRODUCTS/`, so a folder left without a database row is never overwritten.
 - Never reused or reassigned. A retired product keeps its number.
+- Limit: `EK-PRD_99999`. Creation is refused past it.
 
 ## Fields
 
@@ -24,7 +26,7 @@ SKU, name (required, not unique), description (optional), status, created_at, up
 - `Retired`: the product reached its end of life.
 - `Research`: a research project (calibration programs, experiments, ...), not a product to manufacture or sell.
 
-The user can set the status to `Active` or `Retired` at any time. `Retired` keeps an archive: the user can still read the product's data or re-activate it, and the SKU is not deleted or reassigned.
+The user can change the status at any time, from any status to any other. `Retired` keeps an archive: the user can still read the product's data or re-activate it, and the SKU is not deleted or reassigned.
 
 A status history table logs every status change with a timestamp.
 

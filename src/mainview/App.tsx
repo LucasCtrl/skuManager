@@ -814,7 +814,7 @@ function PricesSection() {
         <input
           id="set-cur"
           maxLength={4}
-          className={`${field} h-11 w-20 text-center`}
+          className={`${field} h-11 !w-20 text-center`}
           value={currency}
           onChange={(e) => setCurrency(e.target.value)}
           onBlur={() => api.setCurrency({ currency }).then(setCurrency)}

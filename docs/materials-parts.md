@@ -7,7 +7,7 @@ Raw materials (filament, sheets, …) and purchased parts (screws, standoffs, fe
 |                | Raw material                        | Purchased part                                                   |
 | -------------- | ----------------------------------- | ---------------------------------------------------------------- |
 | SKU prefix     | `EK-MAT_`                           | `EK-PRT_`                                                        |
-| Data folder    | `2_MATERIALS/`                      | `3_PARTS/`                                                       |
+| Data folder    | `3_MATERIALS/`                      | `4_PARTS/`                                                       |
 | List           | Materials list                      | Parts list                                                       |
 | Type examples  | PLA, PMMA, PETG                     | Screw, standoff, feet                                            |
 | Specifications | Colour, thickness or weight, finish | Multiple specifications field (`M3x50`, `Male-Female`, `8x2`, …) |
@@ -120,7 +120,7 @@ The header links to the materials list and the parts list. See [navigation.md](n
 2. A popup asks for the seller, the type, the specifications and the price unit, and optionally the description, the seller SKU and a first price.
 3. The popup shows the SKU that will be created as the fields are filled.
 4. The user validates or cancels.
-   - Validated: the app creates a system folder named after the SKU in `2_MATERIALS/` or `3_PARTS/`, then opens the item page.
+   - Validated: the app creates a system folder named after the SKU in `3_MATERIALS/` or `4_PARTS/`, then opens the item page.
    - Validated but the SKU already exists: the app refuses and says which item already uses it.
    - Cancelled: the app returns to the list.
 

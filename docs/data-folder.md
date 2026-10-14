@@ -1,6 +1,6 @@
 # Data folder
 
-Code: `src/bun/store.ts` (open, inspect), `src/bun/index.ts` (settings), first-run screen in `src/mainview/App.tsx`.
+Code: `src/bun/store.ts` (open, inspect), `src/bun/index.ts` (settings), first-run screen in `src/mainview/pages/setup/FirstRun.tsx`.
 
 When the app opens for the first time, the user selects the folder where the data is stored. It contains:
 

@@ -1,6 +1,6 @@
 # Versions and migration
 
-Code: `src/shared/version.ts`, `src/bun/db/migrations.ts`, `src/bun/db/version.ts`, `src/bun/store.ts`, migration popup in `src/mainview/App.tsx`.
+Code: `src/shared/version.ts`, `src/bun/db/migrations.ts`, `src/bun/db/version.ts`, `src/bun/store.ts`, migration popup in `src/mainview/pages/setup/Migration.tsx`.
 
 ```
 v[MAJOR].[MINOR].[PATCH]

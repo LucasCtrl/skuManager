@@ -1,6 +1,6 @@
 # Settings and language
 
-Code: settings page in `src/mainview/App.tsx`, `src/mainview/i18n.ts`, settings storage in `src/bun/index.ts`.
+Code: `src/mainview/pages/settings/`, `src/mainview/i18n/`, settings storage in `src/bun/index.ts`.
 
 A dedicated page, opened from the settings icon in the header. See [navigation.md](navigation.md).
 

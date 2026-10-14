@@ -1,6 +1,6 @@
 # Navigation
 
-Code: `Header` and the `Page` state in `src/mainview/App.tsx`.
+Code: `src/mainview/layouts/Header.tsx`, the `Page` state in `src/mainview/App.tsx`.
 
 ## Pages
 

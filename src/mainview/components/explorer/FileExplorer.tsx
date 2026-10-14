@@ -1,10 +1,11 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import type { DragEvent, KeyboardEvent, MouseEvent } from "react";
-import type { FileEntry } from "../../shared/rpc";
-import { skuFolder } from "../../shared/sku";
-import { fmtRelative, type T } from "../i18n";
-import { api } from "../rpc";
-import { Icon, card, toolBtn } from "../ui";
+import type { FileEntry } from "../../../shared/rpc";
+import { skuFolder } from "../../../shared/sku";
+import { fmtRelative, type T } from "../../i18n";
+import { api } from "../../rpc";
+import { Icon } from "../Icon";
+import { card, toolBtn } from "../styles";
 
 const DND = "application/x-sku-paths";
 const join = (dir: string, name: string) => (dir ? `${dir}/${name}` : name);

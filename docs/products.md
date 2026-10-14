@@ -1,6 +1,6 @@
 # Products
 
-Code: `src/bun/store.ts`, `src/bun/db/schema.ts`, `src/mainview/pages.tsx`, product dialogs in `src/mainview/ui.tsx`.
+Code: `src/bun/store.ts`, `src/bun/db/schema.ts`, `src/mainview/pages/products/`.
 
 ## SKU
 

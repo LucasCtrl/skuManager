@@ -68,7 +68,7 @@ Code layout:
 
 - `src/shared/` holds the RPC contract between UI and main process, and `APP_VERSION`.
 - `src/bun/` is the main process: data folder and database (`store.ts`), product file operations (`files.ts`), migrations (`db/`).
-- `src/mainview/` is the React UI. Shared components are in `ui.tsx`; the design tokens are in `index.css`.
+- `src/mainview/` is the React UI. Shared components are in `components/`, screens in `pages/`; the design tokens are in `index.css`.
 
 ## Releasing
 

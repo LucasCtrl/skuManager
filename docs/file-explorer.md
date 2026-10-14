@@ -1,6 +1,6 @@
 # File explorer
 
-Code: `src/mainview/explorer/`, `src/bun/files.ts` (SKU folder operations, path guard), upload server in `src/bun/index.ts`.
+Code: `src/mainview/components/explorer/`, `src/bun/files.ts` (SKU folder operations, path guard), upload server in `src/bun/index.ts`.
 
 The product, material and part pages show the content of the SKU's system folder. It must be editable like a real file explorer:
 

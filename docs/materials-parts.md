@@ -1,6 +1,6 @@
 # Raw materials and purchased parts
 
-Code: `src/bun/items.ts`, `src/shared/sku.ts` (code format, SKU folders), `src/mainview/items.tsx`, managed lists in the settings page (`src/mainview/App.tsx`).
+Code: `src/bun/items.ts`, `src/shared/sku.ts` (code format, SKU folders), `src/mainview/pages/items/`, managed lists in `src/mainview/pages/settings/`.
 
 Raw materials (filament, sheets, …) and purchased parts (screws, standoffs, feet, …) follow the same rules. They differ only in their SKU prefix, their data folder and their specification fields. "Item" below means either one.
 

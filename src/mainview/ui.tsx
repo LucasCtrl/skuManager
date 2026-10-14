@@ -144,6 +144,7 @@ export const statusTone: Record<Status, { bg: string; fg: string; dot: string }>
   "In development": { bg: "bg-dev-bg", fg: "text-dev-fg", dot: "bg-dev-fg" },
   Active: { bg: "bg-active-bg", fg: "text-active-fg", dot: "bg-active-fg" },
   Retired: { bg: "bg-retired-bg", fg: "text-retired-fg", dot: "bg-retired-fg" },
+  Research: { bg: "bg-research-bg", fg: "text-research-fg", dot: "bg-research-fg" },
 };
 
 export const Dot = ({ status, size = 6 }: { status: Status; size?: number }) => (

@@ -283,7 +283,7 @@ export function FileExplorer({ sku, t }: { sku: string; t: T }) {
     : [
         { key: "explorer.newFolder", fn: () => setCreating(true), hint: `${MOD}Shift+N` },
         ...(clip ? [{ key: "explorer.paste", fn: paste, hint: `${MOD}V` }] : []),
-        { key: "explorer.reveal", fn: () => run(() => api.reveal({ sku, path })) },
+        { key: "explorer.openFolder", fn: () => run(() => api.openPath({ sku, path })) },
       ];
 
   const crumbs = path ? path.split("/") : [];
@@ -344,10 +344,10 @@ export function FileExplorer({ sku, t }: { sku: string; t: T }) {
         <button
           type="button"
           className={toolBtn}
-          onClick={() => run(() => api.reveal({ sku, path }))}
+          onClick={() => run(() => api.openPath({ sku, path }))}
         >
           <Icon name="external" size={16} />
-          {t("explorer.reveal")}
+          {t("explorer.openFolder")}
         </button>
         <button
           type="button"

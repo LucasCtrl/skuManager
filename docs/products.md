@@ -22,6 +22,7 @@ SKU, name (required, not unique), description (optional), status, created_at, up
 - `In development`: the product is being worked on. Not ready to be manufactured or sold. Default at creation.
 - `Active`: the product can be manufactured and sold.
 - `Retired`: the product reached its end of life.
+- `Research`: a research project (calibration programs, experiments, ...), not a product to manufacture or sell.
 
 The user can set the status to `Active` or `Retired` at any time. `Retired` keeps an archive: the user can still read the product's data or re-activate it, and the SKU is not deleted or reassigned.
 
@@ -33,7 +34,7 @@ Shown when the application opens. See [navigation.md](navigation.md).
 
 - A search bar at the top. It searches the SKU, name and description, and the list refreshes while the user types.
 - To the right of the search bar, a button to create a new product.
-- Status filter chips: All / In development / Active / Retired.
+- Status filter chips: All / In development / Active / Retired / Research.
 - Below, the product list. Each row shows a status badge and opens the product page on click.
 
 ## Creating a product

@@ -3,7 +3,7 @@
 Desktop app to create product SKUs and keep each product's files in its own folder.
 
 - Every product gets a unique, never-reused SKU: `EK-PRD_00001`, `EK-PRD_00002`, …
-- Products have a name, description and status (**In development**, **Active**, **Retired**), with a status history.
+- Products have a name, description and status (**In development**, **Active**, **Retired**, **Research**), with a status history.
 - Each SKU has a folder you can manage from inside the app: drag files in from your system file explorer, create folders, rename, duplicate, cut/copy/paste, move to trash, open with the default app.
 - English and French, light and dark themes.
 - Runs on Windows, macOS (Apple Silicon) and Linux.

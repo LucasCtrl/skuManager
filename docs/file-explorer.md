@@ -17,6 +17,6 @@ The product page shows the content of the SKU's system folder. It must be editab
 - Internal drag-and-drop to move.
 - Drag-in from the OS. The webview only gets `File` objects, not paths, so it posts the bytes to a localhost upload server in the main process.
 - Double-click opens with the default app.
-- "Show in system explorer".
+- "Open in system explorer" opens the current folder; "Show in system explorer" on a selected item highlights it.
 
 Deferred: OS clipboard Ctrl+C/V.

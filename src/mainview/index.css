@@ -34,6 +34,8 @@
   --active-fg: #166534;
   --retired-bg: #e7e5e1;
   --retired-fg: #57534e;
+  --research-bg: #ece4fb;
+  --research-fg: #6b21a8;
   --scrim: rgb(26 27 30 / 0.45);
   color-scheme: light;
 }
@@ -69,6 +71,8 @@
   --active-fg: #7bd69a;
   --retired-bg: #2b2a28;
   --retired-fg: #b5b0a8;
+  --research-bg: #2a2140;
+  --research-fg: #c4a7f5;
   --scrim: rgb(0 0 0 / 0.6);
   color-scheme: dark;
 }

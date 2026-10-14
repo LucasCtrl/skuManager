@@ -1,6 +1,6 @@
 import type { RPCSchema } from "electrobun/main";
 
-export const STATUSES = ["In development", "Active", "Retired"] as const;
+export const STATUSES = ["In development", "Active", "Retired", "Research"] as const;
 export type Status = (typeof STATUSES)[number];
 
 export type Product = {

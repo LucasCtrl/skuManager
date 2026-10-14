@@ -67,6 +67,7 @@ const en = {
   "list.empty.In development": "No products in development.",
   "list.empty.Active": "No active products.",
   "list.empty.Retired": "No retired products.",
+  "list.empty.Research": "No research projects.",
 
   "product.created": "Created {date}",
   "product.updated": "Updated {date}",
@@ -89,10 +90,13 @@ const en = {
   "status.In development": "In development",
   "status.Active": "Active",
   "status.Retired": "Retired",
+  "status.Research": "Research",
   "status.help.In development": "Still being designed. Not ready to manufacture or sell.",
   "status.help.Active": "Ready for manufacturing and selling.",
   "status.help.Retired":
     "End of life. Kept as an archive; the SKU is never reused and can be reactivated.",
+  "status.help.Research":
+    "Research project, such as a calibration program. Not a product to manufacture or sell.",
 
   "settings.title": "Settings",
   "settings.dataFolder": "Data folder",
@@ -185,6 +189,7 @@ const fr: Record<Key, string> = {
   "list.empty.In development": "Aucun produit en développement.",
   "list.empty.Active": "Aucun produit actif.",
   "list.empty.Retired": "Aucun produit retiré.",
+  "list.empty.Research": "Aucun projet de recherche.",
 
   "product.created": "Créé le {date}",
   "product.updated": "Modifié {date}",
@@ -207,10 +212,13 @@ const fr: Record<Key, string> = {
   "status.In development": "En développement",
   "status.Active": "Actif",
   "status.Retired": "Retiré",
+  "status.Research": "Recherche",
   "status.help.In development": "Encore en conception. Pas prêt à être fabriqué ni vendu.",
   "status.help.Active": "Prêt pour la fabrication et la vente.",
   "status.help.Retired":
     "Fin de vie. Conservé comme archive ; le SKU n'est jamais réutilisé et peut être réactivé.",
+  "status.help.Research":
+    "Projet de recherche, par exemple un programme de calibration. Pas un produit à fabriquer ni à vendre.",
 
   "settings.title": "Paramètres",
   "settings.dataFolder": "Dossier de données",

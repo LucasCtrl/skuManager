@@ -15,4 +15,4 @@ Settings:
 - Price units (not implemented yet): the list of units available for raw material and purchased part prices. Units can be added but not changed or deleted; adding one asks for confirmation. See [materials-parts.md](materials-parts.md).
 - Sellers, material types, part types, colours and finishes (not implemented yet): the only place where they are created. Adding one asks for confirmation; an entry cannot be changed or deleted once created. See [materials-parts.md](materials-parts.md).
 
-The UI is in English and French (i18n).
+The UI is in English and French (i18n). On first launch it follows the OS language (French if the OS is in French, English otherwise); the user can change it here.

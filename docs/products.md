@@ -28,7 +28,7 @@ SKU, name (required, not unique), description (optional), status, created_at, up
 
 The user can change the status at any time, from any status to any other. `Retired` keeps an archive: the user can still read the product's data or re-activate it, and the SKU is not deleted or reassigned.
 
-A status history table logs every status change with a timestamp.
+A status history table logs every status change with a timestamp. The product page shows it.
 
 ## Product list
 
@@ -51,7 +51,7 @@ Shown when the application opens. See [navigation.md](navigation.md).
 
 1. The user searches for and/or clicks the product.
 2. The product page shows:
-   - At the top, the product details: SKU, name, description and status.
+   - At the top, the product details: SKU, name, description and status, with the status history.
    - Next to the details, a button to edit the product.
    - Below, the content of the SKU's system folder. See [file-explorer.md](file-explorer.md).
 

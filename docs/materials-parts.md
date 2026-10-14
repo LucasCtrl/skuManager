@@ -71,6 +71,9 @@ Applies to seller, type, colour and finish codes, and to every part of the specs
 - Always upper case: the app converts what the user types (`M3x50` → `M3X50`).
 - Any other character is removed by the app (`1,75 mm` → `175MM`, `Male-Female` → `MALEFEMALE`); a dot is kept (`1.75mm` → `1.75MM`).
 - The user always sees the corrected code before it is saved: in the confirmation popup for a managed list entry, in the SKU preview for an item.
+- Leading and trailing dots are removed (a folder name ending with `.` is invalid on Windows).
+- Accented letters lose their accent before cleaning (`é` → `E`).
+- A code that is empty after cleaning is refused.
 - No maximum length.
 - Below each code field, a hint recommends a short code instead of the full name, with examples: `L'acrylic` → `LACRY`, `Bossard` → `BSSRD`.
 
@@ -78,10 +81,10 @@ Applies to seller, type, colour and finish codes, and to every part of the specs
 
 The app builds `[SPECS]` from the specification fields; the user does not type it. The parts are joined with `_`.
 
-- Material: colour code, thickness or weight, finish code.
+- Material: colour code, thickness or weight, finish code. All three are required.
   - Colours and finishes are managed lists (name + short code), with the same rules as [sellers and types](#sellers-and-types): created only in the settings page, with confirmation, never changed or deleted.
   - Thickness or weight is one free value (`3mm`, `1kg`), used as typed after conversion to the [code format](#code-format).
-- Part: each specifications field is a free value, used as typed after conversion to the [code format](#code-format) (`M3x50` → `M3X50`, `8x2` → `8X2`).
+- Part: one or more specifications fields, in the order entered. Each is a free value, used as typed after conversion to the [code format](#code-format) (`M3x50` → `M3X50`, `8x2` → `8X2`). Empty fields are skipped; at least one is required.
 
 ## Price
 
@@ -91,7 +94,9 @@ The app builds `[SPECS]` from the specification fields; the user does not type i
 - The price unit is fixed per item: it is set at item creation and every price entry of the item uses it.
 - The price is recorded as manual entries. The user adds an entry with a price and a date they choose (for example the invoice date).
 - A price entry can be edited or deleted.
-- The current price is the most recent entry by date.
+- Prices have 2 decimal places.
+- The current price is the most recent entry by date. If several entries share that date, the one entered last wins.
+- An item with no price entry shows `—` as its price.
 - The item page shows the price history with its dates.
 
 ## Status
@@ -101,7 +106,7 @@ The app builds `[SPECS]` from the specification fields; the user does not type i
 
 The user can change the status at any time, in either direction. `Retired` keeps an archive: the user can still read the item's data or re-activate it, and the SKU is not deleted or reassigned.
 
-A status history table logs every status change with a timestamp.
+A status history table logs every status change with a timestamp. The item page shows it, like the product page.
 
 ## Materials list and purchased parts list
 
@@ -110,7 +115,7 @@ Two separate lists, one for raw materials and one for purchased parts. Each work
 - A search bar at the top. It searches every field of the item (SKU, seller, type, specifications, description, seller SKU, …), and the list refreshes while the user types.
 - To the right of the search bar, a button to create a new item.
 - Status filter chips: All / Active / Retired.
-- Below, the item list. Each row shows a status badge and opens the item page on click.
+- Below, the item list. Items have no name: each row shows the SKU, type, description, current price with its unit and a status badge, and opens the item page on click.
 
 ## Navigation
 

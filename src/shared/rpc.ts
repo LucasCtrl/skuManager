@@ -15,6 +15,54 @@ export type Product = {
 
 export type StatusChange = { status: Status; changedAt: string };
 
+// ---------- raw materials and purchased parts (docs/materials-parts.md) ----------
+
+export const ITEM_STATUSES = ["Active", "Retired"] as const;
+export type ItemStatus = (typeof ITEM_STATUSES)[number];
+export type ItemKind = "material" | "part";
+
+// Managed lists: entries are permanent. For units, `code` is the unit name.
+export const LISTS = ["seller", "materialType", "partType", "colour", "finish", "unit"] as const;
+export type ListName = (typeof LISTS)[number];
+export type ListEntry = { id: number; list: ListName; name: string; code: string };
+
+export type Price = { id: number; date: string; cents: number }; // date = YYYY-MM-DD
+
+export type Item = {
+  id: number;
+  kind: ItemKind;
+  sku: string;
+  seller: ListEntry;
+  type: ListEntry;
+  colour: ListEntry | null; // material only
+  finish: ListEntry | null; // material only
+  size: string | null; // material thickness or weight code
+  specs: string[]; // part specification codes
+  unit: ListEntry;
+  description: string;
+  sellerSku: string;
+  status: ItemStatus;
+  createdAt: string;
+  updatedAt: string;
+  price: Price | null; // current: latest date, then latest entered
+};
+
+export type NewItem = {
+  kind: ItemKind;
+  sellerId: number;
+  typeId: number;
+  colourId: number | null;
+  finishId: number | null;
+  size: string;
+  specs: string[];
+  unitId: number;
+  description: string;
+  sellerSku: string;
+  firstPrice: { date: string; cents: number } | null;
+};
+
+export type ItemStatusChange = { status: ItemStatus; changedAt: string };
+
 export type Theme = "system" | "light" | "dark";
 export type Lang = "en" | "fr";
 export type Settings = { dataFolder: string | null; theme: Theme; lang: Lang | null };
@@ -72,6 +120,21 @@ export type AppRPC = {
         { id: number; name: string; description: string; status: Status },
         Product
       >;
+
+      getCurrency: Req<{}, string>;
+      setCurrency: Req<{ currency: string }, string>;
+      listEntries: Req<{}, ListEntry[]>;
+      addEntry: Req<{ list: ListName; name: string; code: string }, ListEntry>; // code is cleaned
+      listItems: Req<{ kind: ItemKind; query: string }, Item[]>;
+      getItem: Req<{ id: number }, { item: Item; prices: Price[]; history: ItemStatusChange[] }>;
+      createItem: Req<NewItem, Item>; // refused if the SKU exists
+      updateItem: Req<
+        { id: number; description: string; sellerSku: string; status: ItemStatus },
+        Item
+      >;
+      addPrice: Req<{ itemId: number; date: string; cents: number }, void>;
+      updatePrice: Req<{ id: number; date: string; cents: number }, void>;
+      deletePrice: Req<{ id: number }, void>;
 
       listDir: Req<{ sku: string; path: string }, FileEntry[]>;
       mkdir: Req<{ sku: string; path: string; name: string }, FileEntry>;

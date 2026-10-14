@@ -5,6 +5,7 @@ import type { AppRPC, Settings } from "../shared/rpc";
 import { APP_VERSION } from "../shared/version";
 import * as store from "./store";
 import * as files from "./files";
+import * as items from "./items";
 
 // ---------- settings (per-user, outside the data folder) ----------
 
@@ -101,13 +102,25 @@ const rpc = BrowserView.defineRPC<AppRPC>({
       updateProduct: ({ id, name, description, status }) =>
         store.updateProduct(id, name, description, status),
 
+      getCurrency: () => items.getCurrency(),
+      setCurrency: ({ currency }) => items.setCurrency(currency),
+      listEntries: () => items.listAllEntries(),
+      addEntry: ({ list, name, code }) => items.addEntry(list, name, code),
+      listItems: ({ kind, query }) => items.listItems(kind, query),
+      getItem: ({ id }) => items.getItem(id),
+      createItem: (v) => items.createItem(v),
+      updateItem: ({ id, description, sellerSku, status }) =>
+        items.updateItem(id, description, sellerSku, status),
+      addPrice: ({ itemId, date, cents }) => items.addPrice(itemId, date, cents),
+      updatePrice: ({ id, date, cents }) => items.updatePrice(id, date, cents),
+      deletePrice: ({ id }) => items.deletePrice(id),
+
       listDir: ({ sku, path }) => files.listDir(sku, path),
       mkdir: ({ sku, path, name }) => files.mkdir(sku, path, name),
       rename: ({ sku, path, newName }) => files.rename(sku, path, newName),
       trash: ({ sku, paths }) => {
         const abs = paths.map((p) => files.resolveIn(sku, p));
-        if (abs.includes(files.productRoot(sku)))
-          throw new Error("Cannot delete the product folder");
+        if (abs.includes(files.productRoot(sku))) throw new Error("Cannot delete the SKU folder");
         for (const p of abs) Utils.moveToTrash(p);
       },
       copy: ({ sku, paths, dest }) => files.copy(sku, paths, dest),

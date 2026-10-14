@@ -51,7 +51,12 @@ const paths = {
     </>
   ),
   plus: <path d="M5 12h14M12 5v14" />,
-  back: <path d="m12 19-7-7 7-7M19 12H5" />,
+  lock: (
+    <>
+      <rect x="3" y="11" width="18" height="11" rx="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </>
+  ),
   arrowRight: <path d="M5 12h14M12 5l7 7-7 7" />,
   chevronRight: <path d="m9 18 6-6-6-6" />,
   pencil: <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />,

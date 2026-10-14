@@ -5,6 +5,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import * as store from "./store";
 import * as files from "./files";
+import * as items from "./items";
+import { skuFolder, toCode } from "../shared/sku";
 import { compareVersions } from "./db/version";
 import { APP_VERSION } from "../shared/version";
 import { migrations } from "./db/migrations";
@@ -42,6 +44,111 @@ INSERT INTO status_history (product_id, status, changed_at) VALUES (3, 'In devel
     sql: expect.stringContaining("REFERENCES products(id)"),
   });
   check.close();
+});
+
+test("code format and SKU folders", () => {
+  expect(toCode("1,75 mm")).toBe("175MM");
+  expect(toCode("Male-Female")).toBe("MALEFEMALE");
+  expect(toCode("1.75mm")).toBe("1.75MM");
+  expect(toCode("Würth.")).toBe("WURTH");
+  expect(toCode("---")).toBe("");
+  expect(skuFolder("EK-PRD_00001")).toBe("1_PRODUCTS");
+  expect(skuFolder("EK-MAT_A_B_C_D_3MM")).toBe("3_MATERIALS");
+  expect(skuFolder("EK-PRT_A_B_M3X5.7")).toBe("4_PARTS");
+  for (const bad of ["EK-MAT_..", "EK-PRT_A_.", "EK-PRT_a", "EK-PRT_A/B", "../EK-PRD_00001"])
+    expect(() => skuFolder(bad)).toThrow();
+});
+
+test("materials, parts, lists and prices", () => {
+  const dir = mkdtempSync(join(tmpdir(), "sku-"));
+  // a 0.0.2 db with one product migrates to the items schema
+  const d = new Database(join(dir, "db.sqlite"));
+  d.exec(migrations[0].sql + migrations[1].sql);
+  d.exec("INSERT INTO meta VALUES ('version', '0.0.2')");
+  d.close();
+  expect(store.openFolder(dir).kind).toBe("needsMigration");
+  expect(store.migrate().state.kind).toBe("ready");
+  expect(existsSync(join(dir, "3_MATERIALS"))).toBe(true);
+  expect(existsSync(join(dir, "4_PARTS"))).toBe(true);
+  expect(items.getCurrency()).toBe("€");
+  expect(items.setCurrency(" $ ")).toBe("$");
+
+  const add = (list: Parameters<typeof items.addEntry>[0], name: string, code = name) =>
+    items.addEntry(list, name, code).id;
+  const lacry = add("seller", "L'acrylic", "lacry");
+  expect(() => items.addEntry("seller", "Other", "LACRY")).toThrow("already used by L'acrylic");
+  expect(() => items.addEntry("seller", "Empty", "--")).toThrow();
+  expect(() => items.addEntry("seller", " ", "X")).toThrow();
+  const pmma = add("materialType", "PMMA");
+  const blk = add("colour", "Black", "BLK");
+  const opq = add("finish", "Opaque", "OPQ");
+  const sheet = add("unit", "sheet");
+  expect(() => items.addEntry("unit", "Sheet", "")).toThrow(); // units are unique ignoring case
+  const bossard = add("seller", "Bossard");
+  const standoff = add("partType", "Standoff");
+  const piece = add("unit", "piece");
+
+  const mat = {
+    kind: "material" as const,
+    sellerId: lacry,
+    typeId: pmma,
+    colourId: blk,
+    finishId: opq,
+    size: "3 mm",
+    specs: [],
+    unitId: sheet,
+    description: "Cast acrylic",
+    sellerSku: "",
+    firstPrice: { date: "2026-03-12", cents: 1690 },
+  };
+  const m = items.createItem(mat);
+  expect(m.sku).toBe("EK-MAT_LACRY_PMMA_BLK_OPQ_3MM");
+  expect(m.status).toBe("Active");
+  expect(m.price?.cents).toBe(1690);
+  expect(existsSync(join(dir, "3_MATERIALS", m.sku))).toBe(true);
+  expect(() => items.createItem(mat)).toThrow("already exists");
+  expect(() => items.createItem({ ...mat, typeId: standoff })).toThrow(); // wrong list
+  expect(() => items.createItem({ ...mat, size: "--" })).toThrow();
+
+  const p = items.createItem({
+    ...mat,
+    kind: "part",
+    sellerId: bossard,
+    typeId: standoff,
+    colourId: null,
+    finishId: null,
+    specs: ["M2x10", " ", "Male-Female"],
+    unitId: piece,
+    firstPrice: null,
+  });
+  expect(p.sku).toBe("EK-PRT_BOSSARD_STANDOFF_M2X10_MALEFEMALE");
+  expect(p.price).toBeNull();
+  expect(() => items.createItem({ ...mat, kind: "part", specs: ["-"] })).toThrow();
+
+  // current price: latest date, then latest entered
+  items.addPrice(m.id, "2026-09-12", 1840);
+  items.addPrice(m.id, "2026-09-12", 1850);
+  items.addPrice(m.id, "2026-01-01", 100);
+  expect(items.getItem(m.id).item.price?.cents).toBe(1850);
+  expect(() => items.addPrice(m.id, "nope", 1)).toThrow();
+  expect(() => items.addPrice(m.id, "2026-01-01", 1.5)).toThrow();
+  const latest = items.getItem(m.id).prices[0];
+  items.deletePrice(latest.id);
+  expect(items.getItem(m.id).item.price?.cents).toBe(1840);
+
+  // search and status
+  expect(items.listItems("material", "acryl").length).toBe(1);
+  expect(items.listItems("material", "bossard").length).toBe(0);
+  expect(items.listItems("part", "standoff").length).toBe(1);
+  items.updateItem(m.id, "Cast", "CA-1", "Retired");
+  items.updateItem(m.id, "Cast", "CA-1", "Active");
+  expect(items.getItem(m.id).history.map((h) => h.status)).toEqual(["Active", "Retired", "Active"]);
+  expect(() => items.updateItem(m.id, "", "", "Research" as never)).toThrow();
+
+  // the explorer works in item folders
+  files.mkdir(p.sku, "", "datasheets");
+  expect(files.listDir(p.sku, "")[0].name).toBe("datasheets");
+  store.close();
 });
 
 test("init, sku numbering, history, files", () => {

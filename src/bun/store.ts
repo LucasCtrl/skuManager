@@ -10,8 +10,9 @@ import { STATUSES } from "../shared/rpc";
 import { products, statusHistory } from "./db/schema";
 import { migrations } from "./db/migrations";
 import { compareVersions } from "./db/version";
+import { DIRS } from "../shared/sku";
 
-export const PRODUCTS_DIR = "1_PRODUCTS";
+export const PRODUCTS_DIR = DIRS.product;
 export const SKU_RE = /^EK-PRD_(\d{5})$/;
 export const skuOf = (id: number) => `EK-PRD_${String(id).padStart(5, "0")}`;
 
@@ -26,12 +27,12 @@ export const productsDir = () => {
   return join(folder, PRODUCTS_DIR);
 };
 
-function ready() {
+export function ready() {
   if (!db || state.kind !== "ready") throw new Error("Database is not ready");
   return db;
 }
 
-const now = () => new Date().toISOString();
+export const now = () => new Date().toISOString();
 
 export function dbVersion(): string | null {
   if (!sqlite) return null;
@@ -74,7 +75,7 @@ export function close() {
 export function openFolder(dir: string): DbState {
   close();
   try {
-    mkdirSync(join(dir, PRODUCTS_DIR), { recursive: true });
+    for (const d of Object.values(DIRS)) mkdirSync(join(dir, d), { recursive: true });
     sqlite = new Database(join(dir, "db.sqlite"), { create: true });
     sqlite.exec("PRAGMA foreign_keys = ON");
     folder = dir;

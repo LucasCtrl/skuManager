@@ -1,7 +1,20 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import type { AppInfo, DbState, FolderInfo, Lang, Settings, Theme } from "../shared/rpc";
+import type {
+  AppInfo,
+  DbState,
+  FolderInfo,
+  ItemKind,
+  Lang,
+  ListEntry,
+  ListName,
+  Settings,
+  Theme,
+} from "../shared/rpc";
+import { LISTS } from "../shared/rpc";
+import { DIRS, toCode } from "../shared/sku";
 import { APP_VERSION } from "../shared/version";
 import { detectLang, fmtDateTime, makeT, TContext, useT } from "./i18n";
+import { ItemList, ItemPage } from "./items";
 import { ProductList, ProductPage } from "./pages";
 import { api } from "./rpc";
 import {
@@ -11,6 +24,7 @@ import {
   Code,
   ErrorText,
   errMsg,
+  field,
   Icon,
   iconBtn,
   Logo,
@@ -20,7 +34,12 @@ import {
   Skeleton,
 } from "./ui";
 
-type Page = { name: "list" } | { name: "product"; id: number } | { name: "settings" };
+export type Page =
+  | { name: "list" }
+  | { name: "product"; id: number }
+  | { name: "items"; kind: ItemKind }
+  | { name: "item"; kind: ItemKind; id: number }
+  | { name: "settings" };
 
 function useTheme(theme: Theme) {
   useEffect(() => {
@@ -89,6 +108,14 @@ export default function App() {
               <ProductList lang={lang} onOpen={(id) => setPage({ name: "product", id })} />
             )}
             {page.name === "product" && <ProductPage id={page.id} lang={lang} />}
+            {page.name === "items" && (
+              <ItemList
+                key={page.kind}
+                kind={page.kind}
+                onOpen={(id) => setPage({ name: "item", kind: page.kind, id })}
+              />
+            )}
+            {page.name === "item" && <ItemPage key={page.id} id={page.id} lang={lang} />}
             {page.name === "settings" && (
               <SettingsPage
                 lang={lang}
@@ -114,37 +141,48 @@ function Header({
   onNavigate: (p: Page) => void;
 }) {
   const t = useT();
+  // A product, material or part page highlights the link of its list.
+  const current =
+    page.name === "list" || page.name === "product"
+      ? "products"
+      : page.name === "items" || page.name === "item"
+        ? page.kind
+        : null;
+  const links: [string, string, Page][] = [
+    ["products", t("app.products"), { name: "list" }],
+    ["material", t("app.materials"), { name: "items", kind: "material" }],
+    ["part", t("app.parts"), { name: "items", kind: "part" }],
+  ];
   return (
     <header className="flex flex-wrap items-center gap-4 border-b border-line bg-surface px-6 py-2.5">
-      {page.name === "list" ? (
-        <>
-          <Logo />
-          <div className="flex min-w-0 flex-[1_1_200px] items-center gap-1.5 overflow-hidden whitespace-nowrap font-mono text-xs text-muted">
-            <Icon name="folder" size={14} />
-            <span className="truncate">{folder}</span>
-          </div>
-        </>
-      ) : (
-        <button
-          type="button"
-          onClick={() => onNavigate({ name: "list" })}
-          className="inline-flex h-11 items-center gap-1.5 rounded-lg pl-2 pr-3 text-[15px] font-medium text-ink hover:bg-hover"
-        >
-          <Icon name="back" />
-          {t("app.products")}
-        </button>
-      )}
-      {page.name !== "settings" && (
-        <button
-          type="button"
-          className={`${iconBtn} ml-auto`}
-          aria-label={t("app.settings")}
-          title={t("app.settings")}
-          onClick={() => onNavigate({ name: "settings" })}
-        >
-          <Icon name="settings" size={20} />
-        </button>
-      )}
+      <Logo />
+      <nav aria-label={t("app.lists")} className="ml-2 flex items-center gap-1">
+        {links.map(([key, label, target]) => (
+          <button
+            key={key}
+            type="button"
+            aria-current={current === key ? "page" : undefined}
+            onClick={() => onNavigate(target)}
+            className="inline-flex h-10 items-center rounded-lg px-3 text-[15px] font-medium text-muted hover:bg-hover hover:text-ink aria-[current=page]:bg-canvas aria-[current=page]:text-ink"
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
+      <div className="flex min-w-0 flex-[1_1_200px] items-center justify-end gap-1.5 overflow-hidden whitespace-nowrap font-mono text-xs text-muted">
+        <Icon name="folder" size={14} />
+        <span className="truncate">{folder}</span>
+      </div>
+      <button
+        type="button"
+        className={`${iconBtn} aria-[current=page]:bg-canvas`}
+        aria-label={t("app.settings")}
+        aria-current={page.name === "settings" ? "page" : undefined}
+        title={t("app.settings")}
+        onClick={() => onNavigate({ name: "settings" })}
+      >
+        <Icon name="settings" size={20} />
+      </button>
     </header>
   );
 }
@@ -246,11 +284,13 @@ function FirstRun({
                 {t("firstRun.empty")}
               </span>
               <div className="flex flex-col gap-2 font-mono text-[13px]">
-                <div className="flex items-center gap-2.5">
-                  <Icon name="folder" size={16} className="text-accent" />
-                  <span>1_PRODUCTS/</span>
-                  <span className="font-sans text-muted">{t("firstRun.productsDir")}</span>
-                </div>
+                {(["product", "material", "part"] as const).map((k) => (
+                  <div key={k} className="flex items-center gap-2.5">
+                    <Icon name="folder" size={16} className="text-accent" />
+                    <span>{DIRS[k]}/</span>
+                    <span className="font-sans text-muted">{t(`firstRun.dir.${k}`)}</span>
+                  </div>
+                ))}
                 <div className="flex items-center gap-2.5">
                   <Icon name="database" size={16} className="text-muted" />
                   <span>db.sqlite</span>
@@ -550,7 +590,12 @@ function SettingsPage({
         text={
           <Rich
             text={t("settings.dataFolderText")}
-            vars={{ products: <Code>1_PRODUCTS</Code>, db: <Code>db.sqlite</Code> }}
+            vars={{
+              products: <Code>1_PRODUCTS</Code>,
+              materials: <Code>3_MATERIALS</Code>,
+              parts: <Code>4_PARTS</Code>,
+              db: <Code>db.sqlite</Code>,
+            }}
           />
         }
       >
@@ -627,6 +672,9 @@ function SettingsPage({
         />
       </Section>
 
+      <PricesSection />
+      <ListsSection />
+
       <Section title={t("settings.version")}>
         <div className="grid grid-cols-3 gap-4">
           <div className="flex flex-col gap-1">
@@ -647,9 +695,310 @@ function SettingsPage({
         </div>
       </Section>
 
-      <p className="m-0 text-[13px] text-muted">
-        <Rich text={t("settings.skuFormat")} vars={{ format: <Code>EK-PRD_#####</Code> }} />
-      </p>
+      <div className="flex flex-col gap-1 text-[13px] text-muted">
+        <span>{t("settings.skuFormats")}</span>
+        <Code>EK-PRD_#####</Code>
+        <Code>EK-MAT_SELLER_TYPE_COLOUR_FINISH_SIZE</Code>
+        <Code>EK-PRT_SELLER_TYPE_SPECS</Code>
+      </div>
     </main>
+  );
+}
+
+// ---------- managed lists (docs/materials-parts.md): permanent, so every add is confirmed ----------
+
+type Pending = { list: ListName; name: string; code: string; typed: string };
+
+function ConfirmEntry({
+  pending,
+  onBack,
+  onDone,
+}: {
+  pending: Pending;
+  onBack: () => void;
+  onDone: (e: ListEntry) => void;
+}) {
+  const t = useT();
+  const [error, setError] = useState<string | null>(null);
+  const isUnit = pending.list === "unit";
+  const one = t(`lists.one.${pending.list}`);
+  const create = async () => {
+    try {
+      onDone(await api.addEntry({ list: pending.list, name: pending.name, code: pending.typed }));
+    } catch (e) {
+      setError(errMsg(e));
+    }
+  };
+  return (
+    <Modal
+      alert
+      width={460}
+      title={t("lists.confirmTitle", { one })}
+      onClose={onBack}
+      footer={
+        <>
+          <button type="button" className={btn} onClick={onBack}>
+            {t("lists.backToEdit")}
+          </button>
+          <button type="button" className={btnPrimary} onClick={create}>
+            {t("lists.create", { one })}
+          </button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-4 px-6 pb-6 pt-4">
+        <dl className="m-0 flex flex-col gap-3 rounded-lg border border-divider bg-subtle px-4 py-3.5">
+          {!isUnit && (
+            <div className="flex flex-col gap-0.5">
+              <dt className="text-xs text-muted">{t("lists.name")}</dt>
+              <dd className="m-0 text-[15px] font-medium">{pending.name}</dd>
+            </div>
+          )}
+          <div className="flex flex-col gap-0.5">
+            <dt className="text-xs text-muted">{isUnit ? t("lists.unit") : t("lists.code")}</dt>
+            <dd className={`m-0 text-lg font-medium ${isUnit ? "" : "font-mono"}`}>
+              {pending.code}
+            </dd>
+          </div>
+          {!isUnit && pending.typed !== pending.code && (
+            <span className="text-[13px] text-warn">
+              {t("lists.corrected", { typed: pending.typed })}
+            </span>
+          )}
+        </dl>
+        <p className="m-0 flex gap-2.5 text-sm leading-normal text-body">
+          <Icon name="lock" className="mt-px text-muted" />
+          <span>{isUnit ? t("lists.permanentUnit") : t("lists.permanent", { one })}</span>
+        </p>
+        <ErrorText error={error} />
+      </div>
+    </Modal>
+  );
+}
+
+function useEntries() {
+  const [entries, setEntries] = useState<ListEntry[]>([]);
+  const load = () => api.listEntries({}).then(setEntries);
+  useEffect(() => {
+    load();
+  }, []);
+  return { entries, load };
+}
+
+function PricesSection() {
+  const t = useT();
+  const { entries, load } = useEntries();
+  const [currency, setCurrency] = useState("");
+  const [draft, setDraft] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState<Pending | null>(null);
+  useEffect(() => {
+    api.getCurrency({}).then(setCurrency);
+  }, []);
+  const units = entries.filter((e) => e.list === "unit");
+
+  const ask = () => {
+    const v = draft.trim().replace(/\s+/g, " ");
+    if (!v) return setError(t("lists.enterUnit"));
+    if (units.some((u) => u.code.toLowerCase() === v.toLowerCase()))
+      return setError(t("lists.unitExists", { unit: v }));
+    setPending({ list: "unit", name: v, code: v, typed: v });
+  };
+
+  return (
+    <Section title={t("settings.prices")} text={t("settings.pricesText")}>
+      <div className="flex flex-wrap items-center gap-3">
+        <label htmlFor="set-cur" className="w-[90px] text-sm font-medium">
+          {t("settings.currency")}
+        </label>
+        <input
+          id="set-cur"
+          maxLength={4}
+          className={`${field} h-11 w-20 text-center`}
+          value={currency}
+          onChange={(e) => setCurrency(e.target.value)}
+          onBlur={() => api.setCurrency({ currency }).then(setCurrency)}
+        />
+        <span className="text-[13px] text-muted">
+          {t("settings.currencySample", { sample: `${currency}18.40` })}
+        </span>
+      </div>
+      <div className="flex flex-col gap-2.5">
+        <span className="text-sm font-medium">{t("settings.units")}</span>
+        <div className="flex flex-wrap gap-2">
+          {units.map((u) => (
+            <span
+              key={u.id}
+              className="inline-flex h-8 items-center rounded-full border border-line bg-subtle px-3 text-sm"
+            >
+              {u.code}
+            </span>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-start gap-2">
+          <div className="flex min-w-0 flex-[1_1_220px] flex-col gap-1">
+            <label htmlFor="set-unit" className="sr-only">
+              {t("settings.newUnit")}
+            </label>
+            <input
+              id="set-unit"
+              className={`${field} h-11`}
+              placeholder={t("settings.newUnitPlaceholder")}
+              value={draft}
+              onChange={(e) => (setDraft(e.target.value), setError(null))}
+              onKeyDown={(e) => e.key === "Enter" && ask()}
+            />
+            <ErrorText error={error} />
+          </div>
+          <button type="button" className={btn} onClick={ask}>
+            {t("settings.addUnit")}
+          </button>
+        </div>
+        <p className="m-0 text-[13px] text-muted">{t("settings.unitsNote")}</p>
+      </div>
+      {pending && (
+        <ConfirmEntry
+          pending={pending}
+          onBack={() => setPending(null)}
+          onDone={() => (setPending(null), setDraft(""), load())}
+        />
+      )}
+    </Section>
+  );
+}
+
+const TABS = LISTS.filter((l) => l !== "unit");
+
+function ListsSection() {
+  const t = useT();
+  const { entries, load } = useEntries();
+  const [tab, setTab] = useState<ListName>("seller");
+  const [name, setName] = useState("");
+  const [code, setCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState<Pending | null>(null);
+  const [added, setAdded] = useState<Set<number>>(new Set());
+  const rows = entries.filter((e) => e.list === tab);
+  const one = t(`lists.one.${tab}`);
+
+  const ask = () => {
+    const n = name.trim();
+    const c = toCode(code);
+    if (!n) return setError(t("lists.enterName"));
+    if (!c) return setError(t("lists.emptyCode"));
+    const clash = rows.find((e) => e.code === c);
+    if (clash) return setError(t("lists.codeUsed", { code: c, name: clash.name }));
+    setPending({ list: tab, name: n, code: c, typed: code });
+  };
+  const done = (e: ListEntry) => {
+    setPending(null);
+    setName("");
+    setCode("");
+    setAdded((a) => new Set(a).add(e.id));
+    load();
+  };
+
+  return (
+    <section aria-labelledby="lists-title" className={`${card} flex flex-col gap-4 pt-6`}>
+      <div className="flex flex-col gap-1 px-6">
+        <h2 id="lists-title" className="m-0 text-base font-semibold">
+          {t("lists.title")}
+        </h2>
+        <p className="m-0 text-sm leading-normal text-muted">{t("lists.text")}</p>
+      </div>
+      <div
+        role="tablist"
+        aria-label={t("lists.title")}
+        className="flex gap-1 overflow-x-auto border-b border-line px-4"
+      >
+        {TABS.map((l) => (
+          <button
+            key={l}
+            type="button"
+            role="tab"
+            aria-selected={l === tab}
+            onClick={() => (setTab(l), setError(null))}
+            className={`inline-flex h-11 items-center gap-1.5 whitespace-nowrap border-b-2 px-2.5 text-sm font-medium ${
+              l === tab ? "border-accent text-ink" : "border-transparent text-muted hover:text-ink"
+            }`}
+          >
+            {t(`lists.tab.${l}`)}
+            <span className="text-xs tabular-nums text-muted">
+              {entries.filter((e) => e.list === l).length}
+            </span>
+          </button>
+        ))}
+      </div>
+      <div role="tabpanel" className="flex flex-col">
+        <div className="grid grid-cols-[minmax(0,1fr)_200px] gap-3 px-6 pb-2 text-xs font-medium uppercase tracking-[0.06em] text-muted">
+          <span>{t("lists.name")}</span>
+          <span>{t("lists.code")}</span>
+        </div>
+        {rows.map((e) => (
+          <div
+            key={e.id}
+            className="grid min-h-11 grid-cols-[minmax(0,1fr)_200px] items-center gap-3 border-t border-divider px-6"
+          >
+            <span className="text-sm">{e.name}</span>
+            <span className="inline-flex items-center gap-2 font-mono text-[13px] font-medium">
+              {e.code}
+              {added.has(e.id) && (
+                <span className="rounded-md bg-active-bg px-2 py-0.5 font-sans text-xs font-medium text-active-fg">
+                  {t("lists.added")}
+                </span>
+              )}
+            </span>
+          </div>
+        ))}
+        {!rows.length && (
+          <div className="border-t border-divider px-6 py-6 text-sm text-muted">
+            {t("lists.empty")}
+          </div>
+        )}
+        <div className="flex flex-col gap-3 rounded-b-[10px] border-t border-line bg-subtle px-6 pb-6 pt-5">
+          <span className="text-sm font-semibold">{t("lists.addTitle", { one })}</span>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex min-w-0 flex-col gap-1.5">
+              <label htmlFor="set-name" className="text-[13px] font-medium">
+                {t("lists.name")}
+              </label>
+              <input
+                id="set-name"
+                className={`${field} h-11`}
+                placeholder={t(`lists.namePh.${tab}`)}
+                value={name}
+                onChange={(e) => (setName(e.target.value), setError(null))}
+              />
+            </div>
+            <div className="flex min-w-0 flex-col gap-1.5">
+              <label htmlFor="set-code" className="text-[13px] font-medium">
+                {t("lists.shortCode")}
+              </label>
+              <input
+                id="set-code"
+                className={`${field} h-11 font-mono text-sm`}
+                placeholder={t(`lists.codePh.${tab}`)}
+                value={code}
+                onChange={(e) => (setCode(e.target.value), setError(null))}
+                onKeyDown={(e) => e.key === "Enter" && ask()}
+              />
+            </div>
+          </div>
+          <p className="m-0 text-[13px] leading-normal text-muted">
+            <Rich
+              text={t("lists.hint")}
+              vars={{ a: <Code>L'acrylic → LACRY</Code>, b: <Code>Bossard → BSSRD</Code> }}
+            />
+          </p>
+          <ErrorText error={error} />
+          <div className="flex justify-end">
+            <button type="button" className={btn} onClick={ask}>
+              {t("lists.addButton", { one })}
+            </button>
+          </div>
+        </div>
+      </div>
+      {pending && <ConfirmEntry pending={pending} onBack={() => setPending(null)} onDone={done} />}
+    </section>
   );
 }

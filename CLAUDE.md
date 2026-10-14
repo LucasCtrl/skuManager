@@ -7,7 +7,7 @@ The specification is split by feature in `docs/`. Do not read all of it: read on
 | Working on                                                    | Read                                               |
 | ------------------------------------------------------------- | -------------------------------------------------- |
 | SKU format, status, product list, creating/viewing/editing    | [docs/products.md](docs/products.md)               |
-| Raw materials and purchased parts (spec, not implemented yet) | [docs/materials-parts.md](docs/materials-parts.md) |
+| Raw materials and purchased parts, managed lists, prices      | [docs/materials-parts.md](docs/materials-parts.md) |
 | Header, links between pages                                   | [docs/navigation.md](docs/navigation.md)           |
 | Data folder, first launch, `1_PRODUCTS`, `db.sqlite`          | [docs/data-folder.md](docs/data-folder.md)         |
 | App/database versions, migration, backup, bumping the version | [docs/versions.md](docs/versions.md)               |
@@ -35,6 +35,6 @@ Electrobun 2 uses the Hutch toolchain (`~/.hutch/bin` on PATH); the main process
 
 # Layout
 
-- `src/shared/` — RPC contract (`rpc.ts`) and `APP_VERSION` (`version.ts`, single source of truth)
-- `src/bun/` — main process: `store.ts` (data folder, db, versions, products), `files.ts` (product folder ops, path guard), `db/` (drizzle schema + SQL migrations), `index.ts` (settings, RPC handlers, localhost upload server for OS drag-in)
-- `src/mainview/` — React UI: `App.tsx` (shell, db gate, settings), `pages.tsx` (list, product), `ui.tsx`, `i18n.ts`, `explorer/`
+- `src/shared/` — RPC contract (`rpc.ts`), `APP_VERSION` (`version.ts`, single source of truth), SKU code format and folders (`sku.ts`)
+- `src/bun/` — main process: `store.ts` (data folder, db, versions, products), `items.ts` (materials, parts, managed lists, prices), `files.ts` (SKU folder ops, path guard), `db/` (drizzle schema + SQL migrations), `index.ts` (settings, RPC handlers, localhost upload server for OS drag-in)
+- `src/mainview/` — React UI: `App.tsx` (shell, db gate, settings), `pages.tsx` (product list and page), `items.tsx` (material/part list, page, dialogs), `ui.tsx`, `i18n.ts`, `explorer/`

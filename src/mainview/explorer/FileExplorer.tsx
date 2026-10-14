@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import type { DragEvent, KeyboardEvent, MouseEvent } from "react";
 import type { FileEntry } from "../../shared/rpc";
+import { skuFolder } from "../../shared/sku";
 import { fmtRelative, type T } from "../i18n";
 import { api } from "../rpc";
 import { Icon, card, toolBtn } from "../ui";
@@ -297,7 +298,7 @@ export function FileExplorer({ sku, t }: { sku: string; t: T }) {
     <section aria-label={t("explorer.files")} className={`${card} text-sm text-ink`}>
       <div className="flex min-h-16 flex-wrap items-center gap-2 border-b border-divider px-4 py-2">
         <nav className="flex min-w-0 flex-1 flex-wrap items-center gap-0.5 font-mono text-[13px] text-muted">
-          <span className="px-1">1_PRODUCTS</span>
+          <span className="px-1">{skuFolder(sku)}</span>
           {[sku, ...crumbs].map((name, i) => {
             const p = crumbs.slice(0, i).join("/");
             const last = i === crumbs.length;

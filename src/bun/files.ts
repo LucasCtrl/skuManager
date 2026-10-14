@@ -1,12 +1,14 @@
-// File operations inside a product folder. Every path from the webview goes through `resolveIn`.
+// File operations inside a SKU folder (product, material or part). Every path from the webview goes through `resolveIn`.
 import { cpSync, existsSync, mkdirSync, readdirSync, renameSync, statSync } from "node:fs";
 import { basename, dirname, extname, join, relative, resolve, sep } from "node:path";
 import type { FileEntry } from "../shared/rpc";
-import { productsDir, SKU_RE } from "./store";
+import { skuFolder } from "../shared/sku";
+import { dataFolder } from "./store";
 
 export function productRoot(sku: string) {
-  if (!SKU_RE.test(sku)) throw new Error(`Invalid SKU: ${sku}`);
-  const root = join(productsDir(), sku);
+  const dir = dataFolder();
+  if (!dir) throw new Error("No data folder selected");
+  const root = join(dir, skuFolder(sku), sku); // skuFolder throws on anything that isn't a SKU
   mkdirSync(root, { recursive: true }); // recreate if someone deleted it by hand
   return root;
 }

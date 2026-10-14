@@ -1,10 +1,12 @@
 # Raw materials and purchased parts
 
-Not implemented yet. This file is the specification to build from.
+Code: `src/bun/items.ts`, `src/shared/sku.ts` (code format, SKU folders), `src/mainview/items.tsx`, managed lists in the settings page (`src/mainview/App.tsx`).
 
-Raw materials (filament, sheets, …) and purchased parts (screws, standoffs, feet, …) follow the same rules. Manufactured parts (`2_PARTS/`) are a separate, future feature and are not covered here.
+Raw materials (filament, sheets, …) and purchased parts (screws, standoffs, feet, …) follow the same rules. They differ only in their SKU prefix, their data folder and their specification fields. "Item" below means either one.
 
-Out of scope for now: linking materials and parts to the products that use them (bill of materials). Planned later; don't design the schema in a way that prevents it. They differ only in their SKU prefix, their data folder and their specification fields. "Item" below means either one.
+Manufactured parts (`2_PARTS/`) are a separate, future feature and are not covered here.
+
+Out of scope for now: linking materials and parts to the products that use them (bill of materials). Planned later; don't design the schema in a way that prevents it.
 
 |                | Raw material                        | Purchased part                                                   |
 | -------------- | ----------------------------------- | ---------------------------------------------------------------- |
@@ -12,20 +14,20 @@ Out of scope for now: linking materials and parts to the products that use them 
 | Data folder    | `3_MATERIALS/`                      | `4_PARTS/`                                                       |
 | List           | Materials list                      | Purchased parts list                                             |
 | Type examples  | PLA, PMMA, PETG                     | Screw, standoff, feet                                            |
-| Specifications | Colour, thickness or weight, finish | Multiple specifications field (`M3x50`, `Male-Female`, `8x2`, …) |
+| Specifications | Colour, finish, thickness or weight | Multiple specifications field (`M3x50`, `Male-Female`, `8x2`, …) |
 
 ## SKU
 
 ```
-EK-MAT_[SELLER]_[TYPE]_[SPECS]
+EK-MAT_[SELLER]_[TYPE]_[COLOUR]_[FINISH]_[SIZE]
 EK-PRT_[SELLER]_[TYPE]_[SPECS]
 ```
 
-Examples (illustrative): `EK-MAT_ESUN_PLA_BLK_1KG`, `EK-PRT_BOSSARD_SCREW_M3X50`, `EK-PRT_BOSSARD_STANDOFF_M3X50_MF`.
+Examples (illustrative): `EK-MAT_ESUN_PLA_BLK_OPQ_1KG`, `EK-MAT_LACRY_PMMA_BLK_OPQ_3MM`, `EK-PRT_BOSSARD_SCREW_M3X50`, `EK-PRT_BOSSARD_STANDOFF_M3X50_MF`.
 
 - `[SELLER]`: the short code of the seller. See [Sellers and types](#sellers-and-types).
 - `[TYPE]`: the short code of the material type or part type.
-- `[SPECS]`: a code built by the app from the specification fields. See [Specs code](#specs-code).
+- `[COLOUR]_[FINISH]_[SIZE]` (material) and `[SPECS]` (part): codes built by the app from the specification fields. See [Specs code](#specs-code).
 - Codes are upper case letters, digits and dots. See [Code format](#code-format).
 - No counter. The SKU is unique by the combination of its three codes. Creating an item whose SKU already exists is refused.
 - Seller, type and specifications are locked once the SKU exists. A different seller or a different specification is a new SKU.
@@ -79,9 +81,9 @@ Applies to seller, type, colour and finish codes, and to every part of the specs
 
 ## Specs code
 
-The app builds `[SPECS]` from the specification fields; the user does not type it. The parts are joined with `_`.
+The app builds the specification part of the SKU from the specification fields; the user does not type it. The parts are joined with `_`.
 
-- Material: colour code, thickness or weight, finish code. All three are required.
+- Material: colour code, finish code, then thickness or weight, in that order. All three are required.
   - Colours and finishes are managed lists (name + short code), with the same rules as [sellers and types](#sellers-and-types): created only in the settings page, with confirmation, never changed or deleted.
   - Thickness or weight is one free value (`3mm`, `1kg`), used as typed after conversion to the [code format](#code-format).
 - Part: one or more specifications fields, in the order entered. Each is a free value, used as typed after conversion to the [code format](#code-format) (`M3x50` → `M3X50`, `8x2` → `8X2`). Empty fields are skipped; at least one is required.

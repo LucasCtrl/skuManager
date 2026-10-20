@@ -21,6 +21,7 @@ The header is only shown once the data folder is open. The first-run, app-outdat
 ## Header
 
 - The same header is shown on every page: the logo, the list links, the data folder path, then the settings icon.
+- The header stays fixed at the top of the window while the page scrolls.
 - It has the links `Products`, `Materials`, `Purchased parts`. Each opens the corresponding list.
 - A `Parts` link (manufactured parts, `2_PARTS/`) is added in a future release, separate from `Purchased parts`.
 - The link of the current list is highlighted. A product, material or part page highlights the link of its list.

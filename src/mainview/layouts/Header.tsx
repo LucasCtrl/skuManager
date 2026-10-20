@@ -27,7 +27,7 @@ export function Header({
     ["part", t("app.parts"), { name: "items", kind: "part" }],
   ];
   return (
-    <header className="flex flex-wrap items-center gap-4 border-b border-line bg-surface px-6 py-2.5">
+    <header className="sticky top-0 z-10 flex flex-wrap items-center gap-4 border-b border-line bg-surface px-6 py-2.5">
       <Logo />
       <nav aria-label={t("app.lists")} className="ml-2 flex items-center gap-1">
         {links.map(([key, label, target]) => (

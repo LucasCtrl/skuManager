@@ -23,7 +23,7 @@ EK-MAT_[SELLER]_[TYPE]_[COLOUR]_[FINISH]_[SIZE]
 EK-PRT_[SELLER]_[TYPE]_[SPECS]
 ```
 
-Examples (illustrative): `EK-MAT_ESUN_PLA_BLK_OPQ_1KG`, `EK-MAT_LACRY_PMMA_BLK_OPQ_3MM`, `EK-PRT_BOSSARD_SCREW_M3X50`, `EK-PRT_BOSSARD_STANDOFF_M3X50_MF`.
+Examples (illustrative): `EK-MAT_ESUN_PLA_BLK_OPQ_1KG`, `EK-MAT_LACRY_PMMA_BLK_OPQ_3MM`, `EK-MAT_LACRY_CLR_3MM`, `EK-MAT_PLY_15MM`, `EK-PRT_BOSSARD_SCREW_M3X50`, `EK-PRT_BOSSARD_STANDOFF_M3X50_MF`.
 
 - `[SELLER]`: the short code of the seller. See [Sellers and types](#sellers-and-types).
 - `[TYPE]`: the short code of the material type or part type.
@@ -83,8 +83,8 @@ Applies to seller, type, colour and finish codes, and to every part of the specs
 
 The app builds the specification part of the SKU from the specification fields; the user does not type it. The parts are joined with `_`.
 
-- Material: colour code, finish code, then thickness or weight, in that order. All three are required.
-  - Colours and finishes are managed lists (name + short code), with the same rules as [sellers and types](#sellers-and-types): created only in the settings page, with confirmation, never changed or deleted.
+- Material: colour code, finish code, then thickness or weight, in that order.
+  - Colours and finishes are managed lists (name + short code), with the same rules as [sellers and types](#sellers-and-types): created only in the settings page, with confirmation, never changed or deleted. They are not required has some materials are raw.
   - Thickness or weight is one free value (`3mm`, `1kg`), used as typed after conversion to the [code format](#code-format).
 - Part: one or more specifications fields, in the order entered. Each is a free value, used as typed after conversion to the [code format](#code-format) (`M3x50` → `M3X50`, `8x2` → `8X2`). Empty fields are skipped; at least one is required.
 

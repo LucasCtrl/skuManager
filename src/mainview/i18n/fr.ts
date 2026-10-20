@@ -226,8 +226,6 @@ export const fr: Record<Key, string> = {
   "items.need.seller": "vendeur",
   "items.need.type": "type",
   "items.need.spec": "au moins une spécification",
-  "items.need.colour": "couleur",
-  "items.need.finish": "finition",
   "items.need.size": "épaisseur ou poids",
   "items.need.unit": "unité de prix",
   "items.newTitle.material": "Nouvelle matière",

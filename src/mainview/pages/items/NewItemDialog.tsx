@@ -86,8 +86,6 @@ export function NewItemDialog({
   if (isPart) {
     if (!specCodes.length) missing.push(t("items.need.spec"));
   } else {
-    if (!v.colourId) missing.push(t("items.need.colour"));
-    if (!v.finishId) missing.push(t("items.need.finish"));
     if (!size) missing.push(t("items.need.size"));
   }
   if (!v.unitId) missing.push(t("items.need.unit"));
@@ -99,7 +97,7 @@ export function NewItemDialog({
     code(v.typeId) ?? "[TYPE]",
     ...(isPart
       ? [specCodes.length ? specCodes.join("_") : "[SPECS]"]
-      : [code(v.colourId) ?? "[COLOUR]", code(v.finishId) ?? "[FINISH]", size || "[SIZE]"]),
+      : [code(v.colourId), code(v.finishId), size || "[SIZE]"].filter((c) => c != null)),
   ]);
   const duplicate = !missing.length && existing.has(sku);
   const { busy, error, submit } = useSubmit(() =>
@@ -248,14 +246,7 @@ export function NewItemDialog({
             <fieldset className="m-0 flex flex-col gap-2.5 border-0 p-0">
               <legend className="mb-2.5 p-0 text-[13px] font-semibold">{t("items.specs")}</legend>
               <div className="grid grid-cols-3 gap-3.5">
-                <Field
-                  id="ni-colour"
-                  label={
-                    <>
-                      {t("items.colour")} <Req />
-                    </>
-                  }
-                >
+                <Field id="ni-colour" label={t("items.colour")}>
                   <Select
                     id="ni-colour"
                     value={v.colourId}
@@ -263,14 +254,7 @@ export function NewItemDialog({
                     onChange={(colourId) => set({ colourId })}
                   />
                 </Field>
-                <Field
-                  id="ni-finish"
-                  label={
-                    <>
-                      {t("items.finish")} <Req />
-                    </>
-                  }
-                >
+                <Field id="ni-finish" label={t("items.finish")}>
                   <Select
                     id="ni-finish"
                     value={v.finishId}

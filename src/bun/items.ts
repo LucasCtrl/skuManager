@@ -177,8 +177,9 @@ export function createItem(v: NewItem): Item {
   const seller = pick(v.sellerId, "seller");
   const type = pick(v.typeId, isPart ? "partType" : "materialType");
   const unit = pick(v.unitId, "unit");
-  const colour = isPart ? null : pick(v.colourId, "colour");
-  const finish = isPart ? null : pick(v.finishId, "finish");
+  // Colour and finish are optional (raw materials): skipped in the SKU when empty.
+  const colour = isPart || v.colourId == null ? null : pick(v.colourId, "colour");
+  const finish = isPart || v.finishId == null ? null : pick(v.finishId, "finish");
   const size = isPart ? null : toCode(v.size);
   const specs = isPart ? v.specs.map(toCode).filter(Boolean) : [];
   if (!isPart && !size) throw new Error("Enter a thickness or weight.");
@@ -189,7 +190,7 @@ export function createItem(v: NewItem): Item {
     v.kind,
     isPart
       ? [seller.code, type.code, ...specs]
-      : [seller.code, type.code, colour!.code, finish!.code, size!],
+      : [seller.code, type.code, colour?.code, finish?.code, size!].filter((c) => c != null),
   );
   if (d.select({ id: items.id }).from(items).where(eq(items.sku, sku)).get())
     throw new Error(`${sku} already exists.`);

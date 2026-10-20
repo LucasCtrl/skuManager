@@ -32,8 +32,8 @@ export function specFacts(i: Item, t: ReturnType<typeof useT>) {
     f(t(`items.typeLabel.${i.kind}`), i.type.name, i.type.code),
     ...(i.kind === "material"
       ? [
-          f(t("items.colour"), i.colour!.name, i.colour!.code),
-          f(t("items.finish"), i.finish!.name, i.finish!.code),
+          ...(i.colour ? [f(t("items.colour"), i.colour.name, i.colour.code)] : []),
+          ...(i.finish ? [f(t("items.finish"), i.finish.name, i.finish.code)] : []),
           f(t("items.size"), i.size!),
         ]
       : [f(t("items.specs"), i.specs.join(" · "))]),

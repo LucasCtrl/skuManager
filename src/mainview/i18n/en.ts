@@ -225,8 +225,6 @@ export const en = {
   "items.need.seller": "seller",
   "items.need.type": "type",
   "items.need.spec": "at least one specification",
-  "items.need.colour": "colour",
-  "items.need.finish": "finish",
   "items.need.size": "thickness or weight",
   "items.need.unit": "price unit",
   "items.newTitle.material": "New material",

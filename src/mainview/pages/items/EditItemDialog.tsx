@@ -32,7 +32,7 @@ export function EditItemDialog({
       value:
         item.kind === "part"
           ? item.specs.join(" · ")
-          : [item.colour!.name, item.finish!.name, item.size].join(" · "),
+          : [item.colour?.name, item.finish?.name, item.size].filter(Boolean).join(" · "),
     },
     { label: t("items.unit"), value: item.unit.code },
   ];

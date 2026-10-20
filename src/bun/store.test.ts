@@ -148,6 +148,13 @@ test("materials, parts, lists and prices", () => {
   // the explorer works in item folders
   files.mkdir(p.sku, "", "datasheets");
   expect(files.listDir(p.sku, "")[0].name).toBe("datasheets");
+
+  // colour and finish are optional (raw materials)
+  const raw = items.createItem({ ...mat, finishId: null, firstPrice: null });
+  expect(raw.sku).toBe("EK-MAT_LACRY_PMMA_BLK_3MM");
+  expect(items.createItem({ ...mat, colourId: null, finishId: null, firstPrice: null }).sku).toBe(
+    "EK-MAT_LACRY_PMMA_3MM",
+  );
   store.close();
 });
 

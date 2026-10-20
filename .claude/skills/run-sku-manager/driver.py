@@ -48,14 +48,14 @@ def up():
     app = subprocess.Popen(["hutch", "run", "start"], cwd=UNIT, env=env(),
                            stdout=open(LOG, "w"), stderr=subprocess.STDOUT, start_new_session=True)
     (RUN / "pids").write_text(f"{x.pid} {app.pid}")
-    for _ in range(180):
+    for _ in range(360):  # electrobun may wait ~3 min on its build lock
         if "Event loop ready" in LOG.read_text(errors="ignore"):
             break
         if app.poll() is not None:
             sys.exit(f"app exited, see {LOG}")
         time.sleep(1)
     else:
-        sys.exit(f"app not ready after 180s, see {LOG}")
+        sys.exit(f"app not ready after 360s, see {LOG}")
     time.sleep(6)  # webview paints a few seconds after the native loop is ready
     print(f"up: data={RUN}/data log={LOG}")
 

@@ -34,16 +34,16 @@ $D click 433 112 shot mats     # Materials tab
 $D down                        # stop app + Xvfb
 ```
 
-| command | what it does |
-|---|---|
-| `up` / `down` | start / stop Xvfb `:99` and `hutch run start` (log: `$RUN/app.log`) |
-| `seed` | insert sellers DISP/LACRY/BOSSARD, types PLY/PMMA/SCREW, colours BLK/CLR, finish OPQ, units sheet/piece |
-| `click X Y` | left click at screen pixels (1400×900 screen) |
-| `type TEXT` | type into the focused input |
-| `key A[+B]` | X keysym or chord: `Return`, `Tab`, `Escape`, `Control_L+a` |
-| `scroll N` | wheel N notches at the last click position (negative = up) |
-| `wait S` | sleep S seconds |
-| `shot NAME` | screenshot to `$RUN/shots/NAME.png`. **Read it** to get the next coordinates |
+| command       | what it does                                                                                            |
+| ------------- | ------------------------------------------------------------------------------------------------------- |
+| `up` / `down` | start / stop Xvfb `:99` and `hutch run start` (log: `$RUN/app.log`)                                     |
+| `seed`        | insert sellers DISP/LACRY/BOSSARD, types PLY/PMMA/SCREW, colours BLK/CLR, finish OPQ, units sheet/piece |
+| `click X Y`   | left click at screen pixels (1400×900 screen)                                                           |
+| `type TEXT`   | type into the focused input                                                                             |
+| `key A[+B]`   | X keysym or chord: `Return`, `Tab`, `Escape`, `Control_L+a`                                             |
+| `scroll N`    | wheel N notches at the last click position (negative = up)                                              |
+| `wait S`      | sleep S seconds                                                                                         |
+| `shot NAME`   | screenshot to `$RUN/shots/NAME.png`. **Read it** to get the next coordinates                            |
 
 Data folder: `$RUN/data` (`db.sqlite`, `1_PRODUCTS/`, `3_MATERIALS/`, `4_PARTS/`). Check files
 there to confirm what the UI created.
@@ -106,5 +106,8 @@ hutch run typecheck && hutch run lint
 
 - **First screenshot shows an empty "Data folder" field and a faded button**: the webview was
   still loading. Wait a few seconds and take another `shot`.
-- **`app not ready after 180s`**: read `$RUN/app.log`. Usually the build (vite or electrobun
-  prepare) failed.
+- **Log stops at `[electrobun] Waiting for the project build lock...`**: this happens right after
+  the previous `down`. The lock cleared on its own after about 3 minutes, and `up` waits up to
+  6 minutes.
+- **`app not ready after 360s`**: read `$RUN/app.log`. The app may still be starting. Run `down`
+  before the next `up`.

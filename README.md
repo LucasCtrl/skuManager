@@ -1,9 +1,11 @@
 # SKU Manager
 
-Desktop app to create product SKUs and keep each product's files in its own folder.
+Desktop app to create SKUs for products, raw materials and purchased parts, and keep each SKU's files in its own folder.
 
 - Every product gets a unique, never-reused SKU: `EK-PRD_00001`, `EK-PRD_00002`, …
 - Products have a name, description and status (**In development**, **Active**, **Retired**, **Research**), with a status history.
+- Raw materials (`EK-MAT_ESUN_PLA_BLK_OPQ_1KG`) and purchased parts (`EK-PRT_BOSSARD_SCREW_M3X50`) get a SKU built from their seller, type and specifications. Each has a description, seller SKU, status (**Active**, **Retired**) and a dated price history.
+- Sellers, material types, part types, colours, finishes and price units are lists managed in the settings. The currency symbol is a setting too.
 - Each SKU has a folder you can manage from inside the app: drag files in from your system file explorer, create folders, rename, duplicate, cut/copy/paste, move to trash, open with the default app.
 - English and French, light and dark themes.
 - Runs on Windows, macOS (Apple Silicon) and Linux.
@@ -34,7 +36,11 @@ On first launch, choose a data folder. Pick an empty folder to start fresh, or a
 ├── 1_PRODUCTS/
 │   ├── EK-PRD_00001/   ← one folder per SKU, your files go here
 │   └── EK-PRD_00002/
-├── db.sqlite           ← products, status history, database version
+├── 3_MATERIALS/
+│   └── EK-MAT_ESUN_PLA_BLK_OPQ_1KG/
+├── 4_PARTS/
+│   └── EK-PRT_BOSSARD_SCREW_M3X50/
+├── db.sqlite           ← products, materials, parts, prices, lists, database version
 └── db.backup-v0.0.1-2026-10-08.sqlite   ← backups (Settings → Back up now)
 ```
 
@@ -66,9 +72,11 @@ hutch run build        # release build into artifacts/
 
 Code layout:
 
-- `src/shared/` holds the RPC contract between UI and main process, and `APP_VERSION`.
-- `src/bun/` is the main process: data folder and database (`store.ts`), product file operations (`files.ts`), migrations (`db/`).
-- `src/mainview/` is the React UI. Shared components are in `components/`, screens in `pages/`; the design tokens are in `index.css`.
+- `src/shared/` holds the RPC contract between UI and main process, `APP_VERSION`, and the SKU code format and folders (`sku.ts`).
+- `src/bun/` is the main process: data folder, database and products (`store.ts`), materials, parts, managed lists and prices (`items.ts`), SKU folder file operations (`files.ts`), schema and migrations (`db/`).
+- `src/mainview/` is the React UI. Shared components are in `components/`, the header in `layouts/`, screens in `pages/` (`setup/`, `products/`, `items/`, `settings/`), translations in `i18n/`; the design tokens are in `index.css`.
+
+The specification is in [`docs/`](docs), one file per feature.
 
 ## Releasing
 

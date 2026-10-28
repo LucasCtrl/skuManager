@@ -15,7 +15,7 @@ Rules:
 - If the folder already contains data, never delete it. Work with the existing data.
 - If the folder is empty, create the database and the folder structure.
 - If the folder has files but no `db.sqlite`, create the database and the folders next to the existing files.
-- On every open, create any missing data folder (`1_PRODUCTS/`, and later `3_MATERIALS/`, `4_PARTS/`), for example in a folder made by an older version.
+- On every open, create any missing data folder (`1_PRODUCTS/`, `3_MATERIALS/`, `4_PARTS/`), for example in a folder made by an older version.
 - Changing the data folder in the settings opens the new folder. Nothing is moved or copied from the old one.
 - Single user only. Shared and network folders are not supported.
 - The chosen folder path is stored in the per-user app config dir, not in the data folder.

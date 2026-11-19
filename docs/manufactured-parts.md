@@ -27,7 +27,7 @@ Example: `EK-MAN_00012_toolIdCard_v1`, `EK-MAN_00012_toolIdCard_v2`.
 The user types a free name (`Tool ID card`). The app builds `[partName]` from it and shows it in the SKU preview before it is saved.
 
 - Accented letters lose their accent (`é` → `e`).
-- The name is split into words on every character that is not a letter or a digit.
+- The name is split into words on every character that is not `A`–`Z`, `a`–`z` or `0`–`9`: spaces, punctuation and any other letter (`ß`, `ø`, Greek, …) are word breaks and are not kept.
 - The first word is lower case; every other word starts with an upper case letter, the rest lower case: `Tool ID card` → `toolIdCard`, `Mini-figure (base)` → `miniFigureBase`.
 - A name that is empty after conversion is refused.
 - At most 50 characters after conversion, so folder paths stay under the Windows path length limit.
@@ -69,7 +69,7 @@ A status history table logs every status change with a timestamp, including auto
 2. A popup shows the SKU of the new version and asks for confirmation. The next number is above both the highest version of the part in the database and the highest version folder of the part in `2_MANUFACTURED_PARTS/`, so a folder left without a database row is never overwritten.
 3. On confirm, the app:
    - creates the new version as `In development`, with the description of the version it was created from;
-   - copies the composition of that version;
+   - copies the composition of that version, with each line's `To review` mark;
    - creates the new version's folder in `2_MANUFACTURED_PARTS/` and copies the content of that version's folder into it;
    - opens the new version's page.
 
@@ -88,19 +88,19 @@ A list of lines. Each line is one of:
 
 - Quantities are entered in the item's price unit; the app does not convert units. The unit is shown next to the quantity field.
 - A duration is entered as hours, minutes and seconds (`1 h 36 min`, `26 s`).
+- Quantities have at most 3 decimal places. A manufactured part count is a whole number.
 - The composition can be edited in any status. The user adds, edits and removes lines on the version page.
 - A manufactured part line references an exact version SKU (`…_v2`), not the part.
-- A version cannot contain itself, directly or through other parts. Adding a line that would create a cycle is refused, and the app says which part closes the loop.
+- A version cannot contain itself, directly or through other parts. Adding or changing a line in a way that would create a cycle is refused, and the app says which part closes the loop.
 - Only `Active` items can be picked for a new line: retired materials and purchased parts, and manufactured part versions that are `In development` or `Retired`, cannot be picked.
 - Existing lines stay when their item's status changes. A line whose item is no longer `Active` is marked with the item's status (`Retired`, `In development`).
 
 ### To review
 
-When a version is retired because another version of the same part becomes `Active` (older or newer), every composition line that references the retired version is marked `To review`, on manufactured parts and on products. See [products.md](products.md#composition).
+When a version of a part becomes `Active`, every composition line that references any other version of the same part (older or newer, whatever its status) is marked `To review`, on manufactured parts and on products. See [products.md](products.md#composition).
 
 - The mark shows on the line, and on the list row and page of the part version or product that holds it.
 - It is cleared when the line is switched to the `Active` version of the part, or when the user clicks `Mark as reviewed` on the line (the line keeps the retired version).
-- A version retired manually, without another one becoming `Active`, does not mark lines.
 
 ## Cost
 
@@ -110,6 +110,7 @@ The app computes the cost of each version from its composition, with the current
 - Operation line: see [operations.md](operations.md#rate).
 - Manufactured part line: count × the cost of that version.
 - Version cost: the sum of its lines, shown with 2 decimal places and the currency setting.
+- Costs are computed without rounding; only the displayed amounts are rounded. A displayed total can differ by a cent from the sum of the displayed lines.
 - A line whose item has no price or rate shows `—`, and the total is marked as partial.
 - A manufactured part line whose version cost is partial is partial too: it shows the known amount, marked as partial, and so does the total.
 
@@ -139,7 +140,7 @@ Opened from the `Parts` header link. See [navigation.md](navigation.md). Works l
    - At the top, the details: SKU, name, origin product (link to its page), version, description, status with the status history, and cost.
    - Next to the details, a button to edit the version and a button to create a new version.
    - The other versions of the part, each with its status badge, linking to their page.
-   - The composition, with a button to add a line and, on each line, buttons to edit and delete it, the line cost and the `Retired` / `To review` marks.
+   - The composition, with a button to add a line and, on each line, buttons to edit and delete it, the line cost, the item's status when it is not `Active`, and the `To review` mark.
    - The parts and products that use this version, linking to their page.
    - Below, the content of the SKU's system folder (STL, DXF, …). See [file-explorer.md](file-explorer.md).
 

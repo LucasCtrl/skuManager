@@ -66,7 +66,7 @@ Works like the product list (see [products.md](products.md)).
 
 1. The user searches for and/or clicks the operation.
 2. The operation page shows:
-   - At the top, the operation details: SKU, name, description, rate kind and current rate.
+   - At the top, the operation details: SKU, name, description, rate kind, rate unit and current rate.
    - Next to the details, a button to edit the operation.
    - The rate history, with a button to add a rate entry and, on each entry, buttons to edit and delete it.
    - The manufactured part versions that use the operation, linking to their page.

@@ -17,7 +17,7 @@ EK-PRD_[ID5]
 
 ## Fields
 
-SKU, name (required, not unique), description (optional), status, created_at, updated_at.
+SKU, name (required, not unique), description (optional), status, composition (see [Composition](#composition)), cost (computed, see [Cost](#cost)), created_at, updated_at.
 
 ## Status
 
@@ -54,7 +54,7 @@ Shown when the application opens. See [navigation.md](navigation.md).
    - At the top, the product details: SKU, name, description, status with the status history, and cost. See [Cost](#cost).
    - Next to the details, a button to edit the product.
    - The manufactured parts designed for the product (this product is their origin product): every version, with its status badge and the `To review` mark, linking to its page, and a button to create a manufactured part. See [manufactured-parts.md](manufactured-parts.md).
-   - The composition, with a button to add a line and, on each line, buttons to edit and delete it, the line cost and the `Retired` / `To review` marks. See [Composition](#composition).
+   - The composition, with a button to add a line and, on each line, buttons to edit and delete it, the line cost, the item's status when it is not `Active`, and the `To review` mark. See [Composition](#composition).
    - Below, the content of the SKU's system folder. See [file-explorer.md](file-explorer.md).
 
 ## Editing a product
@@ -69,15 +69,15 @@ Shown when the application opens. See [navigation.md](navigation.md).
 
 The bill of materials of the product. A list of lines, each one:
 
-- a manufactured part version, from any product, with a count. A line references an exact version SKU (`…_v2`);
-- or a purchased part, with a quantity in the part's price unit.
+- a manufactured part version, from any product, with a whole-number count. A line references an exact version SKU (`…_v2`);
+- or a purchased part, with a quantity in the part's price unit, at most 3 decimal places.
 
 Rules:
 
 - The manufactured parts designed for the product are not added automatically: the user adds the version and quantity. A product can use manufactured parts from any origin product.
 - The composition can be edited unless the product is `Retired`.
 - Only `Active` items can be picked for a new line: retired purchased parts, and manufactured part versions that are `In development` or `Retired`, cannot be picked. Existing lines stay when their item's status changes, marked with that status.
-- A line is marked `To review` when its manufactured part version is retired because another version of the part becomes `Active`. The mark also shows on the product list row. See [manufactured-parts.md](manufactured-parts.md#to-review).
+- A line is marked `To review` when another version of its manufactured part becomes `Active`. The mark also shows on the product list row. See [manufactured-parts.md](manufactured-parts.md#to-review).
 
 ## Cost
 

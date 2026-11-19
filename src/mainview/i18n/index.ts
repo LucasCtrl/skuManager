@@ -19,7 +19,7 @@ export const TContext = createContext<T>(makeT("en"));
 export const useT = () => useContext(TContext);
 
 // Day-first formats, as in the design ("14 Sep 2026").
-const locale = (lang: Lang) => (lang === "fr" ? "fr-FR" : "en-GB");
+export const locale = (lang: Lang) => (lang === "fr" ? "fr-FR" : "en-GB");
 export const fmtDay = (d: string | number, lang: Lang) =>
   new Date(d).toLocaleDateString(locale(lang), { day: "numeric", month: "short", year: "numeric" });
 export const fmtDateTime = (d: string | number, lang: Lang) =>

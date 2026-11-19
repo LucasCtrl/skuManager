@@ -5,6 +5,8 @@ import { Header } from "./layouts/Header";
 import { ItemList } from "./pages/items/ItemList";
 import { ItemPage } from "./pages/items/ItemPage";
 import { OperationList } from "./pages/operations/OperationList";
+import { PartList } from "./pages/parts/PartList";
+import { PartPage } from "./pages/parts/PartPage";
 import { OperationPage } from "./pages/operations/OperationPage";
 import { ProductList } from "./pages/products/ProductList";
 import { ProductPage } from "./pages/products/ProductPage";
@@ -17,6 +19,8 @@ import { api } from "./rpc";
 export type Page =
   | { name: "list" }
   | { name: "product"; id: number }
+  | { name: "parts" }
+  | { name: "version"; id: number }
   | { name: "items"; kind: ItemKind }
   | { name: "item"; kind: ItemKind; id: number }
   | { name: "operations" }
@@ -89,7 +93,15 @@ export default function App() {
             {page.name === "list" && (
               <ProductList lang={lang} onOpen={(id) => setPage({ name: "product", id })} />
             )}
-            {page.name === "product" && <ProductPage id={page.id} lang={lang} />}
+            {page.name === "product" && (
+              <ProductPage key={page.id} id={page.id} lang={lang} onNavigate={setPage} />
+            )}
+            {page.name === "parts" && (
+              <PartList onOpen={(id) => setPage({ name: "version", id })} />
+            )}
+            {page.name === "version" && (
+              <PartPage key={page.id} id={page.id} lang={lang} onNavigate={setPage} />
+            )}
             {page.name === "items" && (
               <ItemList
                 key={page.kind}

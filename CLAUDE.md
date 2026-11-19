@@ -43,5 +43,5 @@ Electrobun 2 uses the Hutch toolchain (`~/.hutch/bin` on PATH); the main process
   - `App.tsx` — shell: settings and db gate, `Page` state and routing
   - `layouts/Header.tsx` — header and list links
   - `components/` — shared UI: `styles.ts` (class names), `Icon`, `Logo`, `Modal`, `Skeleton`, `text.tsx` (Rich, Code, ErrorText), `status.tsx` (badge, history, status picker), `SearchField`, `FilterChips`, `form.tsx` (Field, Req, useSubmit), `explorer/`
-  - `pages/setup/` — first run, app outdated, migration; `pages/products/`; `pages/items/` (materials and parts); `pages/settings/`
+  - `pages/setup/` — first run, app outdated, migration; `pages/products/`; `pages/parts/` (manufactured parts, versions, composition, cost); `pages/items/` (materials and purchased parts); `pages/operations/`; `pages/settings/`
   - `i18n/` — `index.ts` (t, formatters), `en.ts`, `fr.ts`

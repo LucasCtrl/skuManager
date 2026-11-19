@@ -3,7 +3,7 @@ import { type Lang, type Product, type Status, STATUSES } from "../../../shared/
 import { FilterChips } from "../../components/FilterChips";
 import { Icon } from "../../components/Icon";
 import { SearchField } from "../../components/SearchField";
-import { StatusBadge } from "../../components/status";
+import { StatusBadge, ToReviewBadge } from "../../components/status";
 import { btnPrimary, card } from "../../components/styles";
 import { errMsg, ErrorText } from "../../components/text";
 import { fmtRelative, useT } from "../../i18n";
@@ -17,7 +17,7 @@ export function ProductList({ lang, onOpen }: { lang: Lang; onOpen: (id: number)
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Status | null>(null);
   const [total, setTotal] = useState(0);
-  const [matched, setMatched] = useState<Product[]>([]);
+  const [matched, setMatched] = useState<(Product & { toReview: boolean })[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
 
@@ -111,8 +111,9 @@ export function ProductList({ lang, onOpen }: { lang: Lang; onOpen: (id: number)
                 <span className="text-[15px] font-medium">{p.name}</span>
                 <span className="truncate text-[13px] text-muted">{p.description}</span>
               </span>
-              <span>
+              <span className="flex flex-wrap gap-1.5">
                 <StatusBadge status={p.status} />
+                {p.toReview && <ToReviewBadge />}
               </span>
               <span className="text-right text-[13px] text-muted first-letter:uppercase">
                 {fmtRelative(p.updatedAt, lang)}

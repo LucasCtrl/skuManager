@@ -37,7 +37,7 @@ Shown when the application opens. See [navigation.md](navigation.md).
 - A search bar at the top. It searches the SKU, name and description, and the list refreshes while the user types.
 - To the right of the search bar, a button to create a new product.
 - Status filter chips: All / In development / Active / Retired / Research.
-- Below, the product list. Each row shows a status badge and opens the product page on click.
+- Below, the product list. Each row shows a status badge and the `To review` mark, and opens the product page on click.
 
 ## Creating a product
 
@@ -51,8 +51,10 @@ Shown when the application opens. See [navigation.md](navigation.md).
 
 1. The user searches for and/or clicks the product.
 2. The product page shows:
-   - At the top, the product details: SKU, name, description and status, with the status history.
+   - At the top, the product details: SKU, name, description, status with the status history, and cost. See [Cost](#cost).
    - Next to the details, a button to edit the product.
+   - The manufactured parts designed for the product (this product is their origin product): every version, with its status badge and the `To review` mark, linking to its page, and a button to create a manufactured part. See [manufactured-parts.md](manufactured-parts.md).
+   - The composition, with a button to add a line and, on each line, buttons to edit and delete it, the line cost and the `Retired` / `To review` marks. See [Composition](#composition).
    - Below, the content of the SKU's system folder. See [file-explorer.md](file-explorer.md).
 
 ## Editing a product
@@ -62,3 +64,21 @@ Shown when the application opens. See [navigation.md](navigation.md).
 3. The user validates or cancels.
    - Validated: the product is updated and the app returns to the product page.
    - Cancelled: the app returns to the product page without changing anything.
+
+## Composition
+
+The bill of materials of the product. A list of lines, each one:
+
+- a manufactured part version, from any product, with a count. A line references an exact version SKU (`…_v2`);
+- or a purchased part, with a quantity in the part's price unit.
+
+Rules:
+
+- The manufactured parts designed for the product are not added automatically: the user adds the version and quantity. A product can use manufactured parts from any origin product.
+- The composition can be edited unless the product is `Retired`.
+- Retired purchased parts and manufactured part versions cannot be picked for a new line. Existing lines that use them stay and are marked `Retired`.
+- A line is marked `To review` when a newer version of its manufactured part becomes `Active`. The mark also shows on the product list row. See [manufactured-parts.md](manufactured-parts.md#to-review).
+
+## Cost
+
+Computed from the composition with the current prices, never stored: line quantity × current price (purchased part) or × the version cost (manufactured part), summed. Same display and partial rules as a manufactured part. See [manufactured-parts.md](manufactured-parts.md#cost).

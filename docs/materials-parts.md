@@ -4,9 +4,7 @@ Code: `src/bun/items.ts`, `src/shared/sku.ts` (code format, SKU folders), `src/m
 
 Raw materials (filament, sheets, …) and purchased parts (screws, standoffs, feet, …) follow the same rules. They differ only in their SKU prefix, their data folder and their specification fields. "Item" below means either one.
 
-Manufactured parts (`2_PARTS/`) are a separate, future feature and are not covered here.
-
-Out of scope for now: linking materials and parts to the products that use them (bill of materials). Planned later; don't design the schema in a way that prevents it.
+Manufactured parts (`2_MANUFACTURED_PARTS/`) are a separate feature: see [manufactured-parts.md](manufactured-parts.md). Materials and purchased parts are used in their composition, and purchased parts in the product composition (see [products.md](products.md#composition)).
 
 |                | Raw material                        | Purchased part                                                   |
 | -------------- | ----------------------------------- | ---------------------------------------------------------------- |
@@ -121,7 +119,7 @@ Two separate lists, one for raw materials and one for purchased parts. Each work
 
 ## Navigation
 
-The header links to the materials list and the purchased parts list (`Purchased parts`, separate from the future `Parts` link for manufactured parts). See [navigation.md](navigation.md).
+The header links to the materials list and the purchased parts list (`Purchased parts`, separate from the `Parts` link for manufactured parts). See [navigation.md](navigation.md).
 
 ## Creating an item
 

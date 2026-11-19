@@ -76,8 +76,8 @@ Rules:
 
 - The manufactured parts designed for the product are not added automatically: the user adds the version and quantity. A product can use manufactured parts from any origin product.
 - The composition can be edited unless the product is `Retired`.
-- Retired purchased parts and manufactured part versions cannot be picked for a new line. Existing lines that use them stay and are marked `Retired`.
-- A line is marked `To review` when a newer version of its manufactured part becomes `Active`. The mark also shows on the product list row. See [manufactured-parts.md](manufactured-parts.md#to-review).
+- Only `Active` items can be picked for a new line: retired purchased parts, and manufactured part versions that are `In development` or `Retired`, cannot be picked. Existing lines stay when their item's status changes, marked with that status.
+- A line is marked `To review` when its manufactured part version is retired because another version of the part becomes `Active`. The mark also shows on the product list row. See [manufactured-parts.md](manufactured-parts.md#to-review).
 
 ## Cost
 

@@ -30,7 +30,8 @@ The user types a free name (`Tool ID card`). The app builds `[partName]` from it
 - The name is split into words on every character that is not a letter or a digit.
 - The first word is lower case; every other word starts with an upper case letter, the rest lower case: `Tool ID card` → `toolIdCard`, `Mini-figure (base)` → `miniFigureBase`.
 - A name that is empty after conversion is refused.
-- Unique per product: creating a part whose `[partName]` already exists on the same product is refused, and the app says which part uses it.
+- At most 40 characters after conversion, so folder paths stay under the Windows path length limit.
+- Unique per origin product, ignoring case: creating a part whose `[partName]` already exists on the same origin product in any letter case is refused, and the app says which part uses it. `toolIdCard` and `toolIdcard` clash, as folder names are case-insensitive on Windows and macOS.
 - The name and `[partName]` are locked once the part exists. All versions share them.
 
 ## Fields
@@ -65,7 +66,7 @@ A status history table logs every status change with a timestamp, including auto
 ## Versions
 
 1. On a version page, the user clicks the button to create a new version.
-2. A popup shows the SKU of the new version (next number: highest version of the part + 1) and asks for confirmation.
+2. A popup shows the SKU of the new version and asks for confirmation. The next number is above both the highest version of the part in the database and the highest version folder of the part in `2_MANUFACTURED_PARTS/`, so a folder left without a database row is never overwritten.
 3. On confirm, the app:
    - creates the new version as `In development`, with the description of the version it was created from;
    - copies the composition of that version;
@@ -78,26 +79,28 @@ The new version can be created from any version, not only the latest.
 
 A list of lines. Each line is one of:
 
-| Line              | Picked from                                  | Quantity entered                                                  |
-| ----------------- | -------------------------------------------- | ----------------------------------------------------------------- |
-| Raw material      | Materials list                               | A number in the material's price unit (`0.014` kg)                |
-| Operation         | Operations list                              | Depends on the rate kind. See [operations.md](operations.md#rate) |
-| Purchased part    | Purchased parts list                         | A number in the part's price unit                                 |
-| Manufactured part | Manufactured part versions, from any product | A count                                                           |
+| Line              | Picked from                                                | Quantity entered                                                  |
+| ----------------- | ---------------------------------------------------------- | ----------------------------------------------------------------- |
+| Raw material      | Materials list                                             | A number in the material's price unit (`0.014` kg)                |
+| Operation         | Operations list                                            | Depends on the rate kind. See [operations.md](operations.md#rate) |
+| Purchased part    | Purchased parts list                                       | A number in the part's price unit                                 |
+| Manufactured part | Active manufactured part versions, from any origin product | A count                                                           |
 
 - Quantities are entered in the item's price unit; the app does not convert units. The unit is shown next to the quantity field.
 - A duration is entered as hours, minutes and seconds (`1 h 36 min`, `26 s`).
 - The composition can be edited in any status. The user adds, edits and removes lines on the version page.
 - A manufactured part line references an exact version SKU (`…_v2`), not the part.
 - A version cannot contain itself, directly or through other parts. Adding a line that would create a cycle is refused, and the app says which part closes the loop.
-- Retired materials, purchased parts and manufactured part versions cannot be picked for a new line. Existing lines that use them stay and are marked `Retired`.
+- Only `Active` items can be picked for a new line: retired materials and purchased parts, and manufactured part versions that are `In development` or `Retired`, cannot be picked.
+- Existing lines stay when their item's status changes. A line whose item is no longer `Active` is marked with the item's status (`Retired`, `In development`).
 
 ### To review
 
-When a version of a part becomes `Active`, every composition line that references an older version of the same part is marked `To review`, on manufactured parts and on products. See [products.md](products.md#composition).
+When a version is retired because another version of the same part becomes `Active` (older or newer), every composition line that references the retired version is marked `To review`, on manufactured parts and on products. See [products.md](products.md#composition).
 
 - The mark shows on the line, and on the list row and page of the part version or product that holds it.
-- It is cleared when the line is switched to the latest `Active` version, or when the user clicks `Mark as reviewed` on the line (the line keeps the old version).
+- It is cleared when the line is switched to the `Active` version of the part, or when the user clicks `Mark as reviewed` on the line (the line keeps the retired version).
+- A version retired manually, without another one becoming `Active`, does not mark lines.
 
 ## Cost
 
@@ -108,6 +111,7 @@ The app computes the cost of each version from its composition, with the current
 - Manufactured part line: count × the cost of that version.
 - Version cost: the sum of its lines, shown with 2 decimal places and the currency setting.
 - A line whose item has no price or rate shows `—`, and the total is marked as partial.
+- A manufactured part line whose version cost is partial is partial too: it shows the known amount, marked as partial, and so does the total.
 
 ## Manufactured parts list
 
@@ -120,12 +124,12 @@ Opened from the `Parts` header link. See [navigation.md](navigation.md). Works l
 
 ## Creating a part
 
-1. On the product page, the user clicks the button to create a manufactured part.
+1. On the product page, the user clicks the button to create a manufactured part. This works in any product status, `Retired` included: it does not change the product's composition.
 2. A popup asks for the name and optionally the description.
 3. The popup shows the SKU that will be created (`v1`) as the name is typed.
 4. The user validates or cancels.
    - Validated: the app creates a system folder named after the SKU in `2_MANUFACTURED_PARTS/`, then opens the version page.
-   - Validated but the part name already exists on the product: the app refuses and says which part uses it.
+   - Validated but the part name already exists on the origin product (ignoring case): the app refuses and says which part uses it.
    - Cancelled: the app returns to the product page.
 
 ## Viewing a version

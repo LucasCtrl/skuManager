@@ -138,6 +138,7 @@ The header links to the materials list and the purchased parts list (`Purchased 
    - At the top, the item details: SKU, seller, type, specifications, description, seller SKU, current price with its unit, and status.
    - Next to the details, a button to edit the item.
    - The price history, with a button to add a price entry and, on each entry, buttons to edit and delete it.
+   - The manufactured part versions and products that use the item, linking to their page.
    - Below, the content of the SKU's system folder. See [file-explorer.md](file-explorer.md).
 
 ## Editing an item

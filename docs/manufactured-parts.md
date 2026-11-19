@@ -30,7 +30,7 @@ The user types a free name (`Tool ID card`). The app builds `[partName]` from it
 - The name is split into words on every character that is not a letter or a digit.
 - The first word is lower case; every other word starts with an upper case letter, the rest lower case: `Tool ID card` → `toolIdCard`, `Mini-figure (base)` → `miniFigureBase`.
 - A name that is empty after conversion is refused.
-- At most 40 characters after conversion, so folder paths stay under the Windows path length limit.
+- At most 50 characters after conversion, so folder paths stay under the Windows path length limit.
 - Unique per origin product, ignoring case: creating a part whose `[partName]` already exists on the same origin product in any letter case is refused, and the app says which part uses it. `toolIdCard` and `toolIdcard` clash, as folder names are case-insensitive on Windows and macOS.
 - The name and `[partName]` are locked once the part exists. All versions share them.
 

@@ -6,7 +6,10 @@ import { join } from "node:path";
 import * as store from "./store";
 import * as files from "./files";
 import * as items from "./items";
-import { skuFolder, toCode } from "../shared/sku";
+import * as operations from "./operations";
+import * as parts from "./parts";
+import * as composition from "./composition";
+import { skuFolder, toCode, toPartName } from "../shared/sku";
 import { compareVersions } from "./db/version";
 import { APP_VERSION } from "../shared/version";
 import { migrations } from "./db/migrations";
@@ -99,12 +102,12 @@ test("materials, parts, lists and prices", () => {
     unitId: sheet,
     description: "Cast acrylic",
     sellerSku: "",
-    firstPrice: { date: "2026-03-12", cents: 1690 },
+    firstPrice: { date: "2026-03-12", amount: 169000 },
   };
   const m = items.createItem(mat);
   expect(m.sku).toBe("EK-MAT_LACRY_PMMA_BLK_OPQ_3MM");
   expect(m.status).toBe("Active");
-  expect(m.price?.cents).toBe(1690);
+  expect(m.price?.amount).toBe(169000);
   expect(existsSync(join(dir, "3_MATERIALS", m.sku))).toBe(true);
   expect(() => items.createItem(mat)).toThrow("already exists");
   expect(() => items.createItem({ ...mat, typeId: standoff })).toThrow(); // wrong list
@@ -129,12 +132,12 @@ test("materials, parts, lists and prices", () => {
   items.addPrice(m.id, "2026-09-12", 1840);
   items.addPrice(m.id, "2026-09-12", 1850);
   items.addPrice(m.id, "2026-01-01", 100);
-  expect(items.getItem(m.id).item.price?.cents).toBe(1850);
+  expect(items.getItem(m.id).item.price?.amount).toBe(1850);
   expect(() => items.addPrice(m.id, "nope", 1)).toThrow();
   expect(() => items.addPrice(m.id, "2026-01-01", 1.5)).toThrow();
   const latest = items.getItem(m.id).prices[0];
   items.deletePrice(latest.id);
-  expect(items.getItem(m.id).item.price?.cents).toBe(1840);
+  expect(items.getItem(m.id).item.price?.amount).toBe(1840);
 
   // search and status
   expect(items.listItems("material", "acryl").length).toBe(1);
@@ -155,6 +158,209 @@ test("materials, parts, lists and prices", () => {
   expect(items.createItem({ ...mat, colourId: null, finishId: null, firstPrice: null }).sku).toBe(
     "EK-MAT_LACRY_PMMA_3MM",
   );
+  store.close();
+});
+
+test("0.1.0 prices move to 4 decimals", () => {
+  const dir = mkdtempSync(join(tmpdir(), "sku-"));
+  const d = new Database(join(dir, "db.sqlite"));
+  d.exec(
+    migrations
+      .slice(0, 3)
+      .map((m) => m.sql)
+      .join(""),
+  );
+  d.exec(`
+UPDATE meta SET value = '0.1.0' WHERE key = 'version';
+INSERT INTO meta VALUES ('version', '0.1.0') ON CONFLICT DO NOTHING;
+INSERT INTO list_entries (list, name, code, created_at) VALUES ('seller', 'S', 'S', 't'), ('partType', 'T', 'T', 't'), ('unit', 'piece', 'piece', 't');
+INSERT INTO items (kind, sku, seller_id, type_id, specs, unit_id, status, created_at, updated_at) VALUES ('part', 'EK-PRT_S_T_M3', 1, 2, '["M3"]', 3, 'Active', 't', 't');
+INSERT INTO item_prices (item_id, date, cents) VALUES (1, '2026-01-01', 1840);
+`);
+  d.close();
+  expect(store.openFolder(dir).kind).toBe("needsMigration");
+  expect(store.migrate().state.kind).toBe("ready");
+  expect(items.getItem(1).item.price?.amount).toBe(184000);
+  expect(existsSync(join(dir, "2_MANUFACTURED_PARTS"))).toBe(true);
+  expect(existsSync(join(dir, "5_OPERATIONS"))).toBe(true);
+  store.close();
+});
+
+test("part names", () => {
+  expect(toPartName("Tool ID card")).toBe("toolIdCard");
+  expect(toPartName("Mini-figure (base)")).toBe("miniFigureBase");
+  expect(toPartName("Pièce ßeta 3D")).toBe("pieceEta3d");
+  expect(toPartName(" -- ")).toBe("");
+  expect(skuFolder("EK-MAN_00012_toolIdCard_v2")).toBe("2_MANUFACTURED_PARTS");
+  expect(skuFolder("EK-OPE_00001")).toBe("5_OPERATIONS");
+  for (const bad of ["EK-MAN_00012_toolIdCard_v0", "EK-MAN_00012_Tool_v1", "EK-MAN_00012_a/b_v1"])
+    expect(() => skuFolder(bad)).toThrow();
+});
+
+test("operations, manufactured parts, composition, cost and To review", () => {
+  const dir = mkdtempSync(join(tmpdir(), "sku-"));
+  expect(store.openFolder(dir).kind).toBe("ready");
+  const entry = (list: Parameters<typeof items.addEntry>[0], name: string) =>
+    items.addEntry(list, name, name).id;
+  const kg = entry("unit", "kg");
+  const piece = entry("unit", "piece");
+  const seller = entry("seller", "S");
+  const pla = items.createItem({
+    kind: "material",
+    sellerId: seller,
+    typeId: entry("materialType", "PLA"),
+    colourId: null,
+    finishId: null,
+    size: "1.75",
+    specs: [],
+    unitId: kg,
+    description: "",
+    sellerSku: "",
+    firstPrice: { date: "2026-01-01", amount: 200000 }, // 20 € / kg
+  });
+  const screw = items.createItem({
+    colourId: null,
+    finishId: null,
+    size: "",
+    description: "",
+    sellerSku: "",
+    kind: "part",
+    sellerId: seller,
+    typeId: entry("partType", "Screw"),
+    specs: ["M3"],
+    unitId: piece,
+    firstPrice: { date: "2026-01-01", amount: 230 }, // 0.023 € each
+  });
+
+  // operations
+  const print = operations.createOperation({
+    name: "3D printing",
+    description: "",
+    rateKind: "hour",
+    unitId: null,
+    firstRate: { date: "2026-01-01", amount: 9500 }, // 0.95 € / h
+  });
+  expect(print.sku).toBe("EK-OPE_00001");
+  expect(existsSync(join(dir, "5_OPERATIONS", print.sku))).toBe(true);
+  expect(() =>
+    operations.createOperation({
+      name: "Bend",
+      description: "",
+      rateKind: "quantity",
+      unitId: null,
+      firstRate: null,
+    }),
+  ).toThrow("unit");
+  const sand = operations.createOperation({
+    name: "Sanding",
+    description: "",
+    rateKind: "quantity",
+    unitId: piece,
+    firstRate: null,
+  });
+  expect(sand.unit?.name).toBe("piece");
+  expect(operations.listOperations("print").length).toBe(1);
+
+  // parts: name, preview, clash, orphan folder
+  const prd = store.createProduct("Figure", "");
+  const prd2 = store.createProduct("Box", "");
+  expect(parts.partSku(prd.id, "Mini figure")).toBe("EK-MAN_00001_miniFigure_v1");
+  const fig = parts.createPart(prd.id, "Mini figure", "");
+  expect(fig).toMatchObject({ version: 1, status: "In development", cost: { value: null } });
+  expect(existsSync(join(dir, "2_MANUFACTURED_PARTS", fig.sku))).toBe(true);
+  expect(() => parts.createPart(prd.id, "MINI-FIGURE", "")).toThrow("already used by Mini figure");
+  expect(() => parts.createPart(prd.id, "x".repeat(51), "")).toThrow("50");
+  mkdirSync(join(dir, "2_MANUFACTURED_PARTS", "EK-MAN_00001_base_v3"));
+  expect(() => parts.createPart(prd.id, "Base", "")).toThrow("EK-MAN_00001_base_v3");
+  const base = parts.createPart(prd2.id, "Base", ""); // same name, other product: fine
+  expect(base.sku).toBe("EK-MAN_00002_base_v1");
+
+  // composition and cost
+  const V = (id: number) => ({ kind: "version" as const, id });
+  composition.addLine(V(fig.id), { kind: "item", id: pla.id }, 14); // 0.014 kg
+  composition.addLine(V(fig.id), { kind: "operation", id: print.id }, 5760); // 1 h 36 min
+  composition.addLine(V(fig.id), { kind: "operation", id: sand.id }, 2000); // no rate
+  expect(() => composition.addLine(V(fig.id), { kind: "item", id: pla.id }, 1)).toThrow("already");
+  expect(() => composition.addLine(V(fig.id), { kind: "item", id: screw.id }, 0)).toThrow();
+  let c = composition.getComposition(V(fig.id));
+  expect(c.lines.map((l) => l.measure)).toEqual(["quantity", "duration", "quantity"]);
+  expect(c.lines.map((l) => l.unit)).toEqual(["kg", null, "piece"]);
+  expect(c.lines[0].cost.value).toBeCloseTo(0.28);
+  expect(c.lines[1].cost.value).toBeCloseTo(1.52);
+  expect(c.lines[2].cost).toEqual({ value: null, partial: true });
+  expect(c.cost.value).toBeCloseTo(1.8);
+  expect(c.cost.partial).toBe(true);
+
+  // only Active versions can be picked; one Active per part
+  const P = { kind: "product" as const, id: prd2.id };
+  expect(() => composition.addLine(P, V(fig.id), 2)).toThrow("only Active");
+  expect(() => composition.addLine(P, { kind: "item", id: pla.id }, 1)).toThrow("only holds");
+  parts.updatePartVersion(fig.id, "", "Active");
+  composition.addLine(P, V(fig.id), 2);
+  composition.addLine(P, { kind: "item", id: screw.id }, 4000);
+  c = composition.getComposition(P);
+  expect(c.cost.value).toBeCloseTo(2 * 1.8 + 4 * 0.023);
+  expect(c.cost.partial).toBe(true); // through the version
+  expect(composition.usedBy(V(fig.id))).toEqual([
+    { kind: "product", id: prd2.id, sku: prd2.sku, name: "Box" },
+  ]);
+
+  // cycles
+  parts.updatePartVersion(base.id, "", "Active");
+  composition.addLine(V(fig.id), V(base.id), 1);
+  expect(() => composition.addLine(V(base.id), V(fig.id), 1)).toThrow(
+    `${fig.sku} already uses ${base.sku}`,
+  );
+  expect(() => composition.addLine(V(fig.id), V(fig.id), 1)).toThrow("itself");
+
+  // new version: next number above the folders, composition and files copied
+  writeFileSync(join(dir, "2_MANUFACTURED_PARTS", fig.sku, "a.stl"), "x");
+  mkdirSync(join(dir, "2_MANUFACTURED_PARTS", "EK-MAN_00001_minifigure_v4"));
+  expect(parts.nextVersionSku(fig.id)).toBe("EK-MAN_00001_miniFigure_v5");
+  const v5 = parts.newVersion(fig.id);
+  expect(v5).toMatchObject({ version: 5, status: "In development" });
+  expect(existsSync(join(dir, "2_MANUFACTURED_PARTS", v5.sku, "a.stl"))).toBe(true);
+  expect(composition.getComposition(V(v5.id)).lines.length).toBe(4);
+
+  // activating v5 retires v1 and marks the product line, not on a Retired product
+  const prd3 = store.createProduct("Old", "");
+  composition.addLine({ kind: "product", id: prd3.id }, V(fig.id), 1);
+  store.updateProduct(prd3.id, "Old", "", "Retired");
+  expect(() =>
+    composition.addLine({ kind: "product", id: prd3.id }, { kind: "item", id: screw.id }, 1),
+  ).toThrow("retired");
+  parts.updatePartVersion(v5.id, "", "Active");
+  const { version, siblings } = parts.getPartVersion(fig.id);
+  expect(version.status).toBe("Retired");
+  expect(parts.getPartVersion(fig.id).history.map((h) => h.status)).toEqual([
+    "In development",
+    "Active",
+    "Retired",
+  ]);
+  expect(siblings.map((s) => s.version)).toEqual([5]);
+  const line = composition.getComposition(P).lines.find((l) => l.component.kind === "version")!;
+  expect(line).toMatchObject({ toReview: true, status: "Retired" });
+  expect(store.listProducts("Box", null)[0].toReview).toBe(true);
+  expect(composition.getComposition({ kind: "product", id: prd3.id }).lines[0].toReview).toBe(
+    false,
+  );
+  // un-retiring marks it
+  store.updateProduct(prd3.id, "Old", "", "Active");
+  expect(composition.getComposition({ kind: "product", id: prd3.id }).lines[0].toReview).toBe(true);
+
+  // switching to the Active version clears the mark; mark as reviewed too
+  expect(() => composition.updateLine(line.id, 2, base.id)).toThrow("same part");
+  composition.updateLine(line.id, 3, v5.id);
+  expect(store.listProducts("Box", null)[0].toReview).toBe(false);
+  const old = composition.getComposition({ kind: "product", id: prd3.id }).lines[0];
+  composition.markReviewed(old.id);
+  expect(composition.getComposition({ kind: "product", id: prd3.id }).lines[0].toReview).toBe(
+    false,
+  );
+  expect(parts.listPartVersions("box", null, null).map((v) => v.sku)).toEqual([base.sku]); // origin product
+  expect(parts.listPartVersions("", "Active", prd.id).map((v) => v.version)).toEqual([5]);
+  composition.deleteLine(old.id);
+  expect(composition.getComposition({ kind: "product", id: prd3.id }).lines).toEqual([]);
   store.close();
 });
 

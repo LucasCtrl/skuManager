@@ -116,7 +116,7 @@ export function ItemList({ kind, onOpen }: { kind: ItemKind; onOpen: (id: number
                 <span className="truncate text-[13px] text-muted">{i.seller.name}</span>
               </span>
               <span className="text-right text-sm tabular-nums">
-                {i.price ? fmtMoney(i.price.cents, currency, uiLang()) : "—"}
+                {i.price ? fmtMoney(i.price.amount / 1e4, currency, uiLang(), 4) : "—"}
                 {i.price && <span className="text-[13px] text-muted"> / {i.unit.code}</span>}
               </span>
               <span>

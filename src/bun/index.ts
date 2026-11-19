@@ -3,9 +3,13 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { AppRPC, Settings } from "../shared/rpc";
 import { APP_VERSION } from "../shared/version";
+import { operationSku } from "../shared/sku";
 import * as store from "./store";
 import * as files from "./files";
 import * as items from "./items";
+import * as operations from "./operations";
+import * as parts from "./parts";
+import * as composition from "./composition";
 
 // ---------- settings (per-user, outside the data folder) ----------
 
@@ -111,9 +115,37 @@ const rpc = BrowserView.defineRPC<AppRPC>({
       createItem: (v) => items.createItem(v),
       updateItem: ({ id, description, sellerSku, status }) =>
         items.updateItem(id, description, sellerSku, status),
-      addPrice: ({ itemId, date, cents }) => items.addPrice(itemId, date, cents),
-      updatePrice: ({ id, date, cents }) => items.updatePrice(id, date, cents),
+      addPrice: ({ itemId, date, amount }) => items.addPrice(itemId, date, amount),
+      updatePrice: ({ id, date, amount }) => items.updatePrice(id, date, amount),
       deletePrice: ({ id }) => items.deletePrice(id),
+
+      listOperations: ({ query }) => operations.listOperations(query),
+      getOperation: ({ id }) => operations.getOperation(id),
+      nextOperationSku: () => operationSku(operations.nextOperationId()),
+      createOperation: (v) => operations.createOperation(v),
+      updateOperation: ({ id, name, description }) =>
+        operations.updateOperation(id, name, description),
+      addRate: ({ operationId, date, amount }) => operations.addRate(operationId, date, amount),
+      updateRate: ({ id, date, amount }) => operations.updateRate(id, date, amount),
+      deleteRate: ({ id }) => operations.deleteRate(id),
+
+      listPartVersions: ({ query, status, productId }) =>
+        parts.listPartVersions(query, status, productId),
+      getPartVersion: ({ id }) => parts.getPartVersion(id),
+      partSku: ({ productId, name }) => parts.partSku(productId, name),
+      createPart: ({ productId, name, description }) =>
+        parts.createPart(productId, name, description),
+      nextVersionSku: ({ fromId }) => parts.nextVersionSku(fromId),
+      newVersion: ({ fromId }) => parts.newVersion(fromId),
+      updatePartVersion: ({ id, description, status }) =>
+        parts.updatePartVersion(id, description, status),
+
+      getComposition: ({ owner }) => composition.getComposition(owner),
+      addLine: ({ owner, component, quantity }) => composition.addLine(owner, component, quantity),
+      updateLine: ({ id, quantity, versionId }) => composition.updateLine(id, quantity, versionId),
+      deleteLine: ({ id }) => composition.deleteLine(id),
+      markReviewed: ({ id }) => composition.markReviewed(id),
+      usedBy: ({ component }) => composition.usedBy(component),
 
       listDir: ({ sku, path }) => files.listDir(sku, path),
       mkdir: ({ sku, path, name }) => files.mkdir(sku, path, name),

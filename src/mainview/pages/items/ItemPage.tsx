@@ -83,7 +83,7 @@ export function ItemPage({ id, lang }: { id: number; lang: Lang }) {
           <div className="flex min-w-40 flex-col items-end gap-0.5 rounded-lg border border-divider bg-subtle px-4 py-3">
             <span className="text-xs text-muted">{t("items.currentPrice")}</span>
             <span className="text-2xl font-semibold tabular-nums">
-              {i.price ? fmtMoney(i.price.cents, currency, lang) : "—"}
+              {i.price ? fmtMoney(i.price.amount / 1e4, currency, lang, 4) : "—"}
             </span>
             <span className="text-[13px] text-muted">
               {t("items.perUnit", { unit: i.unit.code })}

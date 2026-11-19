@@ -1,7 +1,7 @@
 // Data folder + database. No Electrobun imports here so it runs under `bun test`.
 import { Database } from "bun:sqlite";
 import { drizzle, type BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
-import { and, asc, desc, eq, like, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, getTableColumns, like, or, sql } from "drizzle-orm";
 import { existsSync, mkdirSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { APP_VERSION } from "../shared/version";
@@ -10,11 +10,12 @@ import { STATUSES } from "../shared/rpc";
 import { products, statusHistory } from "./db/schema";
 import { migrations } from "./db/migrations";
 import { compareVersions } from "./db/version";
-import { DIRS } from "../shared/sku";
+import { DIRS, productSku } from "../shared/sku";
+import { markOutdatedLines } from "./composition";
 
 export const PRODUCTS_DIR = DIRS.product;
 export const SKU_RE = /^EK-PRD_(\d{5})$/;
-export const skuOf = (id: number) => `EK-PRD_${String(id).padStart(5, "0")}`;
+export const skuOf = productSku;
 
 let sqlite: Database | null = null;
 let db: BunSQLiteDatabase | null = null;
@@ -156,10 +157,20 @@ export function inspectFolder(dir: string): FolderInfo {
 
 // ---------- products ----------
 
-export function listProducts(query: string, status: Status | null): Product[] {
+export function listProducts(
+  query: string,
+  status: Status | null,
+): (Product & { toReview: boolean })[] {
   const q = `%${query.trim()}%`;
   return ready()
-    .select()
+    .select({
+      ...getTableColumns(products),
+      // qualified by hand: drizzle leaves columns unqualified, and "id" would bind to composition_lines
+      toReview:
+        sql<boolean>`exists (select 1 from composition_lines l where l.product_id = products.id and l.to_review)`.mapWith(
+          Boolean,
+        ),
+    })
     .from(products)
     .where(
       and(
@@ -192,20 +203,27 @@ function cleanName(name: string) {
   return n;
 }
 
-// Next number is above both the db and any existing EK-PRD_xxxxx folder, so a SKU is never reassigned.
-export function nextId(): number {
-  const maxDb = ready()
-    .select({ m: sql<number>`coalesce(max(${products.id}), 0)` })
-    .from(products)
-    .get()!.m;
+// Next 5-digit number above both the db and any SKU folder matching `re`, so a SKU is never reassigned.
+export function nextFreeId(maxDb: number, dir: string, re: RegExp, last: string): number {
   const maxDir = Math.max(
     0,
-    ...readdirSync(productsDir()).map((f) => Number(SKU_RE.exec(f)?.[1] ?? 0)),
+    ...readdirSync(join(folder!, dir)).map((f) => Number(re.exec(f)?.[1] ?? 0)),
   );
   const id = Math.max(maxDb, maxDir) + 1;
-  if (id > 99999) throw new Error("No SKU numbers left (EK-PRD_99999 reached)");
+  if (id > 99999) throw new Error(`No SKU numbers left (${last} reached)`);
   return id;
 }
+
+export const nextId = () =>
+  nextFreeId(
+    ready()
+      .select({ m: sql<number>`coalesce(max(${products.id}), 0)` })
+      .from(products)
+      .get()!.m,
+    PRODUCTS_DIR,
+    SKU_RE,
+    "EK-PRD_99999",
+  );
 
 export function createProduct(name: string, description: string): Product {
   const d = ready();
@@ -244,6 +262,7 @@ export function updateProduct(
     const t = now();
     if (old.status !== status)
       tx.insert(statusHistory).values({ productId: id, status, changedAt: t }).run();
+    if (old.status === "Retired" && status !== "Retired") markOutdatedLines(id);
     return tx
       .update(products)
       .set({ name: n, description: description.trim(), status, updatedAt: t })

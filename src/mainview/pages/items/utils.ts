@@ -9,13 +9,14 @@ export const today = () => new Date().toLocaleDateString("sv-SE"); // YYYY-MM-DD
 
 export const day = (date: string) => fmtDay(`${date}T00:00`, uiLang()); // local midnight, no day shift
 
-// "18,4" → 1840. Up to 2 decimals, null if not a price.
-export function parseCents(s: string) {
-  const m = /^\s*(\d+)(?:[.,](\d{1,2}))?\s*$/.exec(s);
-  return m ? Number(m[1]) * 100 + Number((m[2] ?? "").padEnd(2, "0")) : null;
+// "18,4" → 184000 (ten-thousandths). Up to 4 decimals, null if not a price.
+export function parseAmount(s: string) {
+  const m = /^\s*(\d+)(?:[.,](\d{1,4}))?\s*$/.exec(s);
+  return m ? Number(m[1]) * 10000 + Number((m[2] ?? "").padEnd(4, "0")) : null;
 }
 
-export const centsText = (c: number) => (c / 100).toFixed(2);
+// 184000 → "18.40", 230 → "0.023": 2 to 4 decimals, for editing.
+export const amountText = (a: number) => (a / 10000).toFixed(4).replace(/(\.\d\d\d?)0+$/, "$1");
 
 export function useCurrency() {
   const [currency, setCurrency] = useState("");

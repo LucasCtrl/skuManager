@@ -5,7 +5,7 @@ import { btn, btnPrimary, card, field, toolBtn } from "../../components/styles";
 import { errMsg, ErrorText } from "../../components/text";
 import { fmtMoney, useT } from "../../i18n";
 import { api } from "../../rpc";
-import { centsText, day, parseCents, today, uiLang } from "./utils";
+import { amountText, day, parseAmount, today, uiLang } from "./utils";
 
 export const priceCols = "grid grid-cols-[160px_160px_minmax(0,1fr)_200px] items-center gap-3 px-5";
 
@@ -30,7 +30,7 @@ export function PriceHistory({
   const open = (m: "add" | Price) => {
     setMode(m === "add" ? m : m.id);
     setDate(m === "add" ? today() : m.date);
-    setPrice(m === "add" ? "" : centsText(m.cents));
+    setPrice(m === "add" ? "" : amountText(m.amount));
     setError(null);
   };
   const run = async (fn: () => Promise<unknown>) => {
@@ -43,13 +43,13 @@ export function PriceHistory({
     }
   };
   const save = () => {
-    const cents = parseCents(price);
+    const amount = parseAmount(price);
     if (!date) return setError(t("items.pickDate"));
-    if (cents === null) return setError(t("items.enterPrice"));
+    if (amount === null) return setError(t("items.enterPrice"));
     run(() =>
       mode === "add"
-        ? api.addPrice({ itemId: item.id, date, cents })
-        : api.updatePrice({ id: mode as number, date, cents }),
+        ? api.addPrice({ itemId: item.id, date, amount })
+        : api.updatePrice({ id: mode as number, date, amount }),
     );
   };
 
@@ -124,7 +124,7 @@ export function PriceHistory({
           <div key={p.id} className={`${priceCols} min-h-12 border-b border-divider`}>
             <span className="text-sm tabular-nums">{day(p.date)}</span>
             <span className="text-right text-sm font-medium tabular-nums">
-              {fmtMoney(p.cents, currency, uiLang())}
+              {fmtMoney(p.amount / 1e4, currency, uiLang(), 4)}
             </span>
             <span>
               {n === 0 && (

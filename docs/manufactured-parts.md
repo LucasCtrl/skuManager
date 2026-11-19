@@ -90,6 +90,8 @@ A list of lines. Each line is one of:
 - A duration is entered as hours, minutes and seconds (`1 h 36 min`, `26 s`).
 - Quantities have at most 3 decimal places. A manufactured part count is a whole number.
 - The composition can be edited in any status. The user adds, edits and removes lines on the version page.
+- An item appears on at most one line: adding an item already in the composition is refused. For a manufactured part, the item is the exact version, so `…_v1` and `…_v2` can be on two lines.
+- Editing a line changes its quantity and, for a manufactured part line, the version of the same part it references. To use another item, the user deletes the line and adds a new one.
 - A manufactured part line references an exact version SKU (`…_v2`), not the part.
 - A version cannot contain itself, directly or through other parts. Adding or changing a line in a way that would create a cycle is refused, and the app says which part closes the loop.
 - Only `Active` items can be picked for a new line: retired materials and purchased parts, and manufactured part versions that are `In development` or `Retired`, cannot be picked. Operations have no status and can always be picked.
@@ -101,6 +103,7 @@ When a version of a part becomes `Active`, every composition line that reference
 
 - The mark shows on the line, and on the list row and page of the part version or product that holds it.
 - It is cleared when the line is switched to the `Active` version of the part, or when the user clicks `Mark as reviewed` on the line (the line keeps its version).
+- It is not cleared when the version the line references becomes `Active` later: the user still reviews the line.
 
 ## Cost
 
@@ -132,6 +135,7 @@ Opened from the `Parts` header link. See [navigation.md](navigation.md). Works l
 4. The user validates or cancels.
    - Validated: the app creates a system folder named after the SKU in `2_MANUFACTURED_PARTS/`, then opens the version page.
    - Validated but the part name already exists on the origin product (ignoring case): the app refuses and says which part uses it.
+   - Validated but a folder of that part (any version, ignoring case) already exists in `2_MANUFACTURED_PARTS/` without a database row: the app refuses and says which folder is in the way. Existing files are never reused or overwritten.
    - Cancelled: the app returns to the product page.
 
 ## Viewing a version

@@ -37,8 +37,8 @@ Electrobun 2 uses the Hutch toolchain (`~/.hutch/bin` on PATH); the main process
 
 # Layout
 
-- `src/shared/` — RPC contract (`rpc.ts`), `APP_VERSION` (`version.ts`, single source of truth), SKU code format and folders (`sku.ts`)
-- `src/bun/` — main process: `store.ts` (data folder, db, versions, products), `items.ts` (materials, parts, managed lists, prices), `files.ts` (SKU folder ops, path guard), `db/` (drizzle schema + SQL migrations), `index.ts` (settings, RPC handlers, localhost upload server for OS drag-in)
+- `src/shared/` — RPC contract (`rpc.ts`), `APP_VERSION` (`version.ts`, single source of truth), SKU formats, part names and folders (`sku.ts`)
+- `src/bun/` — main process: `store.ts` (data folder, db, versions, products), `items.ts` (materials, parts, managed lists, prices), `operations.ts` (operations, rates), `parts.ts` (manufactured parts, versions), `composition.ts` (composition lines, cost, To review, cycles, used-by), `files.ts` (SKU folder ops, path guard), `db/` (drizzle schema + SQL migrations), `index.ts` (settings, RPC handlers, localhost upload server for OS drag-in)
 - `src/mainview/` — React UI, one component per file where practical:
   - `App.tsx` — shell: settings and db gate, `Page` state and routing
   - `layouts/Header.tsx` — header and list links

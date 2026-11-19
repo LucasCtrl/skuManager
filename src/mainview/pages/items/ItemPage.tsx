@@ -6,12 +6,22 @@ import { StatusBadge, StatusHistory } from "../../components/status";
 import { btn, card } from "../../components/styles";
 import { errMsg, ErrorText } from "../../components/text";
 import { fmtDay, fmtMoney, fmtRelative, useT } from "../../i18n";
+import { type Page } from "../../App";
 import { api } from "../../rpc";
+import { UsedBy } from "../parts/UsedBy";
 import { EditItemDialog } from "./EditItemDialog";
 import { PriceHistory } from "./PriceHistory";
 import { day, specFacts, useCurrency } from "./utils";
 
-export function ItemPage({ id, lang }: { id: number; lang: Lang }) {
+export function ItemPage({
+  id,
+  lang,
+  onNavigate,
+}: {
+  id: number;
+  lang: Lang;
+  onNavigate: (p: Page) => void;
+}) {
   const t = useT();
   const currency = useCurrency();
   const [data, setData] = useState<{
@@ -102,6 +112,8 @@ export function ItemPage({ id, lang }: { id: number; lang: Lang }) {
         onDelete={(id) => api.deletePrice({ id })}
         onChange={load}
       />
+
+      <UsedBy component={{ kind: "item", id }} onNavigate={onNavigate} />
 
       <FileExplorer key={i.sku} sku={i.sku} t={t} />
 

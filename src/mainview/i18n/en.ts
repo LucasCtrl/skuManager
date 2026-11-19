@@ -124,7 +124,7 @@ export const en = {
   "app.lists": "Lists",
   "settings.prices": "Prices",
   "settings.pricesText":
-    "For raw materials and purchased parts. The currency is only the symbol shown next to prices; changing it doesn't convert stored prices.",
+    "For raw material and purchased part prices, operation rates and costs. The currency is only the symbol shown next to amounts; changing it doesn't convert stored prices.",
   "settings.currency": "Currency",
   "settings.currencySample": "Shown as {sample}",
   "settings.units": "Price units",
@@ -338,6 +338,10 @@ export const en = {
   "parts.ofProductNote": "Designed for this product",
   "parts.new": "New part",
   "parts.noneOfProduct": "No parts designed for this product yet.",
+  "usedBy.title": "Used by",
+  "usedBy.product": "Product",
+  "usedBy.version": "Manufactured part",
+  "usedBy.none": "Not used in any composition.",
 };
 
 export type Key = keyof typeof en;

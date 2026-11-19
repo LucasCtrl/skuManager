@@ -155,8 +155,10 @@ export function SettingsPage({
       <div className="flex flex-col gap-1 text-[13px] text-muted">
         <span>{t("settings.skuFormats")}</span>
         <Code>EK-PRD_#####</Code>
+        <Code>EK-MAN_#####_partName_vN</Code>
         <Code>EK-MAT_SELLER_TYPE_COLOUR_FINISH_SIZE</Code>
         <Code>EK-PRT_SELLER_TYPE_SPECS</Code>
+        <Code>EK-OPE_#####</Code>
       </div>
     </main>
   );

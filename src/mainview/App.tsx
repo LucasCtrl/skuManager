@@ -109,11 +109,15 @@ export default function App() {
                 onOpen={(id) => setPage({ name: "item", kind: page.kind, id })}
               />
             )}
-            {page.name === "item" && <ItemPage key={page.id} id={page.id} lang={lang} />}
+            {page.name === "item" && (
+              <ItemPage key={page.id} id={page.id} lang={lang} onNavigate={setPage} />
+            )}
             {page.name === "operations" && (
               <OperationList onOpen={(id) => setPage({ name: "operation", id })} />
             )}
-            {page.name === "operation" && <OperationPage key={page.id} id={page.id} lang={lang} />}
+            {page.name === "operation" && (
+              <OperationPage key={page.id} id={page.id} lang={lang} onNavigate={setPage} />
+            )}
             {page.name === "settings" && (
               <SettingsPage
                 lang={lang}

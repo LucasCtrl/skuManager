@@ -124,7 +124,7 @@ export const fr: Record<Key, string> = {
   "app.lists": "Listes",
   "settings.prices": "Prix",
   "settings.pricesText":
-    "Pour les matières premières et les pièces achetées. La devise n'est que le symbole affiché à côté des prix ; la changer ne convertit pas les prix enregistrés.",
+    "Pour les prix des matières premières et des pièces achetées, les taux des opérations et les coûts. La devise n'est que le symbole affiché à côté des montants ; la changer ne convertit pas les prix enregistrés.",
   "settings.currency": "Devise",
   "settings.currencySample": "Affiché {sample}",
   "settings.units": "Unités de prix",
@@ -343,4 +343,8 @@ export const fr: Record<Key, string> = {
   "parts.ofProductNote": "Conçues pour ce produit",
   "parts.new": "Nouvelle pièce",
   "parts.noneOfProduct": "Aucune pièce conçue pour ce produit pour l’instant.",
+  "usedBy.title": "Utilisé par",
+  "usedBy.product": "Produit",
+  "usedBy.version": "Pièce fabriquée",
+  "usedBy.none": "Utilisé dans aucune composition.",
 };

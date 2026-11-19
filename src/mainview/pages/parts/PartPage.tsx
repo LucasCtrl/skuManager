@@ -18,6 +18,7 @@ import { useCurrency } from "../items/utils";
 import { Composition, lineTarget } from "./Composition";
 import { CostBox } from "./Cost";
 import { EditVersionDialog, NewVersionDialog } from "./PartDialogs";
+import { UsedBy } from "./UsedBy";
 import { VersionRows } from "./VersionRows";
 
 type Data = {
@@ -137,6 +138,8 @@ export function PartPage({
         onOpen={(l) => onNavigate(lineTarget(l))}
         onChange={load}
       />
+
+      <UsedBy component={{ kind: "version", id }} onNavigate={onNavigate} />
 
       <FileExplorer key={v.sku} sku={v.sku} t={t} />
 

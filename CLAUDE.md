@@ -32,7 +32,7 @@ Electrobun 2 uses the Hutch toolchain (`~/.hutch/bin` on PATH); the main process
 - `hutch install` — install deps
 - `hutch run start` / `hutch run dev` — build and launch (dev = watch)
 - `hutch run build` — release build
-- `hutch run test` — backend tests (`bun test`, store + file ops)
+- `hutch run test` — backend tests (`bun test`, store, items, operations, parts, composition, file ops)
 - `hutch run lint` / `hutch run fmt` / `hutch run typecheck`
 
 # Layout

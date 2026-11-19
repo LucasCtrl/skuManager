@@ -5,13 +5,23 @@ import { FileExplorer } from "../../components/explorer/FileExplorer";
 import { btn, card } from "../../components/styles";
 import { errMsg, ErrorText } from "../../components/text";
 import { fmtDay, fmtRelative, useT } from "../../i18n";
+import { type Page } from "../../App";
 import { api } from "../../rpc";
+import { UsedBy } from "../parts/UsedBy";
 import { PriceHistory } from "../items/PriceHistory";
 import { day, useCurrency } from "../items/utils";
 import { EditOperationDialog } from "./OperationDialogs";
 import { RateText, rateUnit } from "./RateText";
 
-export function OperationPage({ id, lang }: { id: number; lang: Lang }) {
+export function OperationPage({
+  id,
+  lang,
+  onNavigate,
+}: {
+  id: number;
+  lang: Lang;
+  onNavigate: (p: Page) => void;
+}) {
   const t = useT();
   const currency = useCurrency();
   const [data, setData] = useState<{ operation: Operation; rates: Price[] } | null>(null);
@@ -89,6 +99,8 @@ export function OperationPage({ id, lang }: { id: number; lang: Lang }) {
         onDelete={(id) => api.deleteRate({ id })}
         onChange={load}
       />
+
+      <UsedBy component={{ kind: "operation", id }} onNavigate={onNavigate} />
 
       <FileExplorer key={o.sku} sku={o.sku} t={t} />
 

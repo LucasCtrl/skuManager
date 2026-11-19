@@ -93,7 +93,15 @@ export function ItemPage({ id, lang }: { id: number; lang: Lang }) {
         </div>
       </section>
 
-      <PriceHistory item={i} prices={prices} currency={currency} onChange={load} />
+      <PriceHistory
+        unit={i.unit.code}
+        prices={prices}
+        currency={currency}
+        onAdd={(date, amount) => api.addPrice({ itemId: i.id, date, amount })}
+        onUpdate={(id, date, amount) => api.updatePrice({ id, date, amount })}
+        onDelete={(id) => api.deletePrice({ id })}
+        onChange={load}
+      />
 
       <FileExplorer key={i.sku} sku={i.sku} t={t} />
 

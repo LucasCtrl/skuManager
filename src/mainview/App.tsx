@@ -4,6 +4,8 @@ import { detectLang, makeT, TContext } from "./i18n";
 import { Header } from "./layouts/Header";
 import { ItemList } from "./pages/items/ItemList";
 import { ItemPage } from "./pages/items/ItemPage";
+import { OperationList } from "./pages/operations/OperationList";
+import { OperationPage } from "./pages/operations/OperationPage";
 import { ProductList } from "./pages/products/ProductList";
 import { ProductPage } from "./pages/products/ProductPage";
 import { SettingsPage } from "./pages/settings/SettingsPage";
@@ -17,6 +19,8 @@ export type Page =
   | { name: "product"; id: number }
   | { name: "items"; kind: ItemKind }
   | { name: "item"; kind: ItemKind; id: number }
+  | { name: "operations" }
+  | { name: "operation"; id: number }
   | { name: "settings" };
 
 export function useTheme(theme: Theme) {
@@ -94,6 +98,10 @@ export default function App() {
               />
             )}
             {page.name === "item" && <ItemPage key={page.id} id={page.id} lang={lang} />}
+            {page.name === "operations" && (
+              <OperationList onOpen={(id) => setPage({ name: "operation", id })} />
+            )}
+            {page.name === "operation" && <OperationPage key={page.id} id={page.id} lang={lang} />}
             {page.name === "settings" && (
               <SettingsPage
                 lang={lang}

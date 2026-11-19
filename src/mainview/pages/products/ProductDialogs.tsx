@@ -12,12 +12,14 @@ export function NameAndDescription({
   name,
   description,
   rows,
+  placeholder,
   onName,
   onDescription,
 }: {
   name: string;
   description: string;
   rows: number;
+  placeholder?: string;
   onName: (v: string) => void;
   onDescription: (v: string) => void;
 }) {
@@ -53,7 +55,7 @@ export function NameAndDescription({
         <textarea
           id="pd-desc"
           rows={rows}
-          placeholder={t("product.descriptionPlaceholder")}
+          placeholder={placeholder ?? t("product.descriptionPlaceholder")}
           className={`${field} resize-y py-2.5 leading-normal`}
           value={description}
           onChange={(e) => onDescription(e.target.value)}

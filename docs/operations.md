@@ -42,7 +42,7 @@ The rate kind is set at creation and fixed. It decides what a composition line e
 | Per quantity | `0.10 €` per bend, `0.40 €` per m² of engraving | A quantity in the rate unit          | quantity × rate          |
 
 - Per quantity: the rate unit is picked from the price units list managed in the settings page. See [settings.md](settings.md).
-- The rate follows the same rules as the price of a raw material (see [materials-parts.md](materials-parts.md#price)): currency setting, manual dated entries, editable and deletable, 2 decimal places, current rate = most recent entry by date (last entered wins on the same date), `—` when there is no entry.
+- The rate follows the same rules as the price of a raw material (see [materials-parts.md](materials-parts.md#price)): currency setting, manual dated entries, editable and deletable, up to 4 decimal places, current rate = most recent entry by date (last entered wins on the same date), `—` when there is no entry.
 - The operation page shows the rate history with its dates.
 
 ## Operations list

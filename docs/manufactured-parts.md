@@ -92,15 +92,15 @@ A list of lines. Each line is one of:
 - The composition can be edited in any status. The user adds, edits and removes lines on the version page.
 - A manufactured part line references an exact version SKU (`…_v2`), not the part.
 - A version cannot contain itself, directly or through other parts. Adding or changing a line in a way that would create a cycle is refused, and the app says which part closes the loop.
-- Only `Active` items can be picked for a new line: retired materials and purchased parts, and manufactured part versions that are `In development` or `Retired`, cannot be picked.
+- Only `Active` items can be picked for a new line: retired materials and purchased parts, and manufactured part versions that are `In development` or `Retired`, cannot be picked. Operations have no status and can always be picked.
 - Existing lines stay when their item's status changes. A line whose item is no longer `Active` is marked with the item's status (`Retired`, `In development`).
 
 ### To review
 
-When a version of a part becomes `Active`, every composition line that references any other version of the same part (older or newer, whatever its status) is marked `To review`, on manufactured parts and on products. See [products.md](products.md#composition).
+When a version of a part becomes `Active`, every composition line that references any other version of the same part (older or newer, whatever its status) is marked `To review`, on manufactured parts and on products, except `Retired` products. See [products.md](products.md#composition).
 
 - The mark shows on the line, and on the list row and page of the part version or product that holds it.
-- It is cleared when the line is switched to the `Active` version of the part, or when the user clicks `Mark as reviewed` on the line (the line keeps the retired version).
+- It is cleared when the line is switched to the `Active` version of the part, or when the user clicks `Mark as reviewed` on the line (the line keeps its version).
 
 ## Cost
 
@@ -112,6 +112,7 @@ The app computes the cost of each version from its composition, with the current
 - Version cost: the sum of its lines, shown with 2 decimal places and the currency setting.
 - Costs are computed without rounding; only the displayed amounts are rounded. A displayed total can differ by a cent from the sum of the displayed lines.
 - A line whose item has no price or rate shows `—`, and the total is marked as partial.
+- An empty composition shows `—` as its cost.
 - A manufactured part line whose version cost is partial is partial too: it shows the known amount, marked as partial, and so does the total.
 
 ## Manufactured parts list

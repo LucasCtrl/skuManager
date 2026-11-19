@@ -94,7 +94,7 @@ The app builds the specification part of the SKU from the specification fields; 
 - The price unit is fixed per item: it is set at item creation and every price entry of the item uses it.
 - The price is recorded as manual entries. The user adds an entry with a price and a date they choose (for example the invoice date).
 - A price entry can be edited or deleted.
-- Prices have 2 decimal places.
+- Prices have up to 4 decimal places (`0.0230` per screw). Costs computed from them are displayed with 2.
 - The current price is the most recent entry by date. If several entries share that date, the one entered last wins.
 - An item with no price entry shows `—` as its price.
 - The item page shows the price history with its dates.

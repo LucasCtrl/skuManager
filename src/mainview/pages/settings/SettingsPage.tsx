@@ -158,7 +158,7 @@ export function SettingsPage({
         <Code>EK-MAN-#####-partName-vN</Code>
         <Code>EK-MAT-SELLER-TYPE-COLOUR-FINISH-SIZE</Code>
         <Code>EK-PRT-SELLER-TYPE-SPECS</Code>
-        <Code>EK-OPE-#####</Code>
+        <Code>EK-OP-#####</Code>
       </div>
     </main>
   );

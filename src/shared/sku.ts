@@ -12,7 +12,7 @@ export const ITEM_PREFIX = { material: "EK-MAT-", part: "EK-PRT-" } as const;
 
 const id5 = (id: number) => String(id).padStart(5, "0");
 export const productSku = (id: number) => `EK-PRD-${id5(id)}`;
-export const operationSku = (id: number) => `EK-OPE-${id5(id)}`;
+export const operationSku = (id: number) => `EK-OP-${id5(id)}`;
 export const versionSku = (productId: number, partName: string, v: number) =>
   `EK-MAN-${id5(productId)}-${partName}-v${v}`;
 
@@ -42,7 +42,7 @@ export const VERSION_RE = /^EK-MAN-(\d{5})-([a-z0-9][A-Za-z0-9]*)-v([1-9]\d*)$/;
 // Data subfolder holding a SKU's folder. Throws on anything that isn't a SKU (path guard).
 export function skuFolder(sku: string) {
   if (/^EK-PRD-\d{5}$/.test(sku)) return DIRS.product;
-  if (/^EK-OPE-\d{5}$/.test(sku)) return DIRS.operation;
+  if (/^EK-OP-\d{5}$/.test(sku)) return DIRS.operation;
   if (VERSION_RE.test(sku)) return DIRS.version;
   const m = ITEM_RE.exec(sku);
   if (m) return m[1] === "MAT" ? DIRS.material : DIRS.part;

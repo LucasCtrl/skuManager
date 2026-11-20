@@ -196,7 +196,7 @@ test("part names", () => {
   expect(toPartName("Pièce ßeta 3D")).toBe("pieceEta3d");
   expect(toPartName(" -- ")).toBe("");
   expect(skuFolder("EK-MAN-00012-toolIdCard-v2")).toBe("2_MANUFACTURED_PARTS");
-  expect(skuFolder("EK-OPE-00001")).toBe("5_OPERATIONS");
+  expect(skuFolder("EK-OP-00001")).toBe("5_OPERATIONS");
   for (const bad of ["EK-MAN-00012-toolIdCard-v0", "EK-MAN-00012-Tool-v1", "EK-MAN-00012-a/b_v1"])
     expect(() => skuFolder(bad)).toThrow();
 });
@@ -244,7 +244,7 @@ test("operations, manufactured parts, composition, cost and To review", () => {
     unitId: null,
     firstRate: { date: "2026-01-01", amount: 9500 }, // 0.95 € / h
   });
-  expect(print.sku).toBe("EK-OPE-00001");
+  expect(print.sku).toBe("EK-OP-00001");
   expect(existsSync(join(dir, "5_OPERATIONS", print.sku))).toBe(true);
   expect(() =>
     operations.createOperation({

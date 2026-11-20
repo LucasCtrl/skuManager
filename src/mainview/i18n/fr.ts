@@ -293,6 +293,8 @@ export const fr: Record<Key, string> = {
   "comp.markReviewed": "Marquer {sku} comme revu",
   "comp.editLine": "Modifier la ligne {sku}",
   "comp.deleteLine": "Supprimer la ligne {sku}",
+  "comp.moveUp": "Monter {sku}",
+  "comp.moveDown": "Descendre {sku}",
   "line.addTitle": "Ajouter une ligne",
   "line.add": "Ajouter la ligne",
   "line.editTitle": "Modifier la ligne",

@@ -148,6 +148,7 @@ CREATE TABLE composition_lines (
 	part_version_id INTEGER REFERENCES part_versions(id),
 	quantity INTEGER NOT NULL CHECK (quantity > 0),
 	to_review INTEGER NOT NULL DEFAULT 0,
+	position INTEGER NOT NULL DEFAULT 0,
 	CHECK ((product_id IS NULL) <> (version_id IS NULL)),
 	CHECK ((item_id IS NOT NULL) + (operation_id IS NOT NULL) + (part_version_id IS NOT NULL) = 1)
 );

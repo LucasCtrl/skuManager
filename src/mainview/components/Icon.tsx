@@ -35,6 +35,8 @@ export const paths = {
   ),
   arrowRight: <path d="M5 12h14M12 5l7 7-7 7" />,
   chevronRight: <path d="m9 18 6-6-6-6" />,
+  chevronUp: <path d="m18 15-6-6-6 6" />,
+  chevronDown: <path d="m6 9 6 6 6-6" />,
   pencil: <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />,
   copy: (
     <>

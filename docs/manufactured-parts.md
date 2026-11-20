@@ -90,6 +90,7 @@ A list of lines. Each line is one of:
 - A duration is entered as hours, minutes and seconds (`1 h 36 min`, `26 s`).
 - Quantities have at most 3 decimal places. A manufactured part count is a whole number.
 - The composition can be edited in any status. The user adds, edits and removes lines on the version page.
+- The user can reorder the lines (move a line up or down), for example to list them in production order: material, cutting, engraving. A new line goes last. A new version keeps the order.
 - An item appears on at most one line: adding an item already in the composition is refused. For a manufactured part, the item is the exact version, so `…-v1` and `…-v2` can be on two lines.
 - Editing a line changes its quantity and, for a manufactured part line, the version of the same part it references. To use another item, the user deletes the line and adds a new one.
 - A manufactured part line references an exact version SKU (`…-v2`), not the part.
@@ -145,7 +146,7 @@ Opened from the `Parts` header link. See [navigation.md](navigation.md). Works l
    - At the top, the details: SKU, name, origin product (link to its page), version, description, status with the status history, and cost.
    - Next to the details, a button to edit the version and a button to create a new version.
    - The other versions of the part, each with its status badge, linking to their page.
-   - The composition, with a button to add a line and, on each line, buttons to edit and delete it, the line cost, the item's status when it is not `Active`, and the `To review` mark.
+   - The composition, with a button to add a line and, on each line, buttons to move it up or down, edit and delete it, the line cost, the item's status when it is not `Active`, and the `To review` mark.
    - The parts and products that use this version, linking to their page.
    - Below, the content of the SKU's system folder (STL, DXF, …). See [file-explorer.md](file-explorer.md).
 

@@ -235,6 +235,7 @@ export type AppRPC = {
       addLine: Req<{ owner: Owner; component: Component; quantity: number }, void>;
       updateLine: Req<{ id: number; quantity: number; versionId: number | null }, void>; // versionId: switch version
       deleteLine: Req<{ id: number }, void>;
+      moveLine: Req<{ id: number; by: -1 | 1 }, void>; // -1: up, 1: down
       markReviewed: Req<{ id: number }, void>;
       usedBy: Req<{ component: Component }, UsedBy[]>;
 

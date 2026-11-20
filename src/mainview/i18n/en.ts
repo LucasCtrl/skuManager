@@ -290,6 +290,8 @@ export const en = {
   "comp.markReviewed": "Mark {sku} as reviewed",
   "comp.editLine": "Edit line {sku}",
   "comp.deleteLine": "Delete line {sku}",
+  "comp.moveUp": "Move {sku} up",
+  "comp.moveDown": "Move {sku} down",
   "line.addTitle": "Add a line",
   "line.add": "Add line",
   "line.editTitle": "Edit line",

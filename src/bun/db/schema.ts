@@ -132,4 +132,5 @@ export const compositionLines = sqliteTable("composition_lines", {
   partVersionId: integer("part_version_id"),
   quantity: integer("quantity").notNull(), // see CompositionLine in shared/rpc.ts
   toReview: integer("to_review", { mode: "boolean" }).notNull().default(false),
+  position: integer("position").notNull().default(0), // order of the lines within their owner
 });

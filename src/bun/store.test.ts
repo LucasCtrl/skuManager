@@ -295,6 +295,20 @@ test("operations, manufactured parts, composition, cost and To review", () => {
   expect(c.cost.value).toBeCloseTo(1.8);
   expect(c.cost.partial).toBe(true);
 
+  // reorder: sanding to the top, then back down; ends are no-ops
+  const order = () => composition.getComposition(V(fig.id)).lines.map((l) => l.measure);
+  composition.moveLine(c.lines[2].id, -1);
+  composition.moveLine(c.lines[2].id, -1);
+  composition.moveLine(c.lines[2].id, -1);
+  expect(order()).toEqual(["quantity", "quantity", "duration"]);
+  expect(composition.getComposition(V(fig.id)).lines[0].id).toBe(c.lines[2].id);
+  composition.moveLine(c.lines[2].id, 1);
+  composition.moveLine(c.lines[2].id, 1);
+  composition.moveLine(c.lines[2].id, 1);
+  expect(composition.getComposition(V(fig.id)).lines.map((l) => l.id)).toEqual(
+    c.lines.map((l) => l.id),
+  );
+
   // only Active versions can be picked; one Active per part
   const P = { kind: "product" as const, id: prd2.id };
   expect(() => composition.addLine(P, V(fig.id), 2)).toThrow("only Active");

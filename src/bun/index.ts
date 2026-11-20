@@ -144,6 +144,7 @@ const rpc = BrowserView.defineRPC<AppRPC>({
       addLine: ({ owner, component, quantity }) => composition.addLine(owner, component, quantity),
       updateLine: ({ id, quantity, versionId }) => composition.updateLine(id, quantity, versionId),
       deleteLine: ({ id }) => composition.deleteLine(id),
+      moveLine: ({ id, by }) => composition.moveLine(id, by),
       markReviewed: ({ id }) => composition.markReviewed(id),
       usedBy: ({ component }) => composition.usedBy(component),
 

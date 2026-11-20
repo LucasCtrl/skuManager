@@ -21,7 +21,7 @@ export const lineTarget = ({ component: c, sku }: CompositionLine): Page =>
       : { name: "version", id: c.id };
 
 const cols =
-  "grid grid-cols-[minmax(0,1fr)_minmax(0,auto)_130px_120px_132px] items-center gap-3 px-5";
+  "grid grid-cols-[minmax(0,1fr)_minmax(0,auto)_130px_120px_216px] items-center gap-3 px-5";
 
 // Composition of a product or part version. `locked`: a Retired product's composition is read-only.
 export function Composition({
@@ -84,7 +84,7 @@ export function Composition({
           </button>
         )}
       </div>
-      {lines.map((l) => (
+      {lines.map((l, i) => (
         <div key={l.id} className={`${cols} min-h-14 border-b border-divider py-2`}>
           <button
             type="button"
@@ -116,6 +116,19 @@ export function Composition({
             )}
             {!locked && (
               <>
+                {([-1, 1] as const).map((by) => (
+                  <button
+                    key={by}
+                    type="button"
+                    className={`${toolBtn} w-10 justify-center px-0 disabled:opacity-40`}
+                    aria-label={t(by < 0 ? "comp.moveUp" : "comp.moveDown", { sku: l.sku })}
+                    title={t(by < 0 ? "comp.moveUp" : "comp.moveDown", { sku: l.sku })}
+                    disabled={by < 0 ? i === 0 : i === lines.length - 1}
+                    onClick={() => run(() => api.moveLine({ id: l.id, by }))}
+                  >
+                    <Icon name={by < 0 ? "chevronUp" : "chevronDown"} size={16} />
+                  </button>
+                ))}
                 <button
                   type="button"
                   className={`${toolBtn} w-10 justify-center px-0`}

@@ -22,7 +22,11 @@ const NONE: Cost = { value: null, partial: true };
 // cache or compute in SQL if lists get slow.
 export function calculator() {
   const d = ready();
-  const lines = d.select().from(compositionLines).orderBy(asc(compositionLines.id)).all();
+  const lines = d
+    .select()
+    .from(compositionLines)
+    .orderBy(asc(compositionLines.position), asc(compositionLines.id))
+    .all();
   const prices = currentPrices();
   const rates = currentRates();
   const perHour = new Set(
@@ -334,6 +338,7 @@ export function addLine(owner: Owner, c: Component, quantity: number) {
       operationId: c.kind === "operation" ? c.id : null,
       partVersionId: c.kind === "version" ? c.id : null,
       quantity,
+      position: calculator().ownerLines(owner).length, // last; moveLine keeps positions 0..n-1
     })
     .run();
 }
@@ -367,6 +372,22 @@ export function updateLine(id: number, quantity: number, versionId: number | nul
 export function deleteLine(id: number) {
   checkOwner(lineOwner(lineRow(id)));
   ready().delete(compositionLines).where(eq(compositionLines.id, id)).run();
+}
+
+// Swaps the line with its neighbour above (-1) or below (1); no-op at either end.
+export function moveLine(id: number, by: -1 | 1) {
+  const owner = lineOwner(lineRow(id));
+  checkOwner(owner);
+  const ls = calculator().ownerLines(owner);
+  const i = ls.findIndex((l) => l.id === id);
+  const j = i + by;
+  if (j < 0 || j >= ls.length) return;
+  [ls[i], ls[j]] = [ls[j], ls[i]];
+  ready().transaction((tx) =>
+    ls.forEach((l, position) =>
+      tx.update(compositionLines).set({ position }).where(eq(compositionLines.id, l.id)).run(),
+    ),
+  );
 }
 
 export function markReviewed(id: number) {

@@ -100,9 +100,9 @@ A list of lines. Each line is one of:
 
 ### To review
 
-When a version of a part becomes `Active`, every composition line that references any other version of the same part (older or newer, whatever its status) is marked `To review`, on manufactured parts and on products, except `Retired` products. See [products.md](products.md#composition).
+When a version of a part becomes `Active`, every composition line that references any other version of the same part (older or newer, whatever its status) is marked `To review`, on manufactured parts, products and product variants, except `Retired` products and their variants. See [products.md](products.md#composition).
 
-- The mark shows on the line, and on the list row and page of the part version or product that holds it.
+- The mark shows on the line, and on the list row and page of the part version, product or variant that holds it.
 - It is cleared when the line is switched to the `Active` version of the part, or when the user clicks `Mark as reviewed` on the line (the line keeps its version).
 - It is not cleared when the version the line references becomes `Active` later: the user still reviews the line.
 
@@ -118,6 +118,7 @@ The app computes the cost of each version from its composition, with the current
 - A line whose item has no price or rate shows `—`, and the total is marked as partial.
 - An empty composition shows `—` as its cost.
 - A manufactured part line whose version cost is partial is partial too: it shows the known amount, marked as partial, and so does the total.
+- Inside a product variant, the cost of a manufactured part line is computed again with the variant's swaps applied at every depth, not taken from the version cost. See [products.md](products.md#swaps).
 
 ## Manufactured parts list
 
@@ -147,7 +148,7 @@ Opened from the `Parts` header link. See [navigation.md](navigation.md). Works l
    - Next to the details, a button to edit the version and a button to create a new version.
    - The other versions of the part, each with its status badge, linking to their page.
    - The composition, with a button to add a line and, on each line, buttons to move it up or down, edit and delete it, the line cost, the item's status when it is not `Active`, and the `To review` mark.
-   - The parts and products that use this version, linking to their page.
+   - The parts, products and product variants that use this version, linking to their page.
    - Below, the content of the SKU's system folder (STL, DXF, …). See [file-explorer.md](file-explorer.md).
 
 ## Editing a version

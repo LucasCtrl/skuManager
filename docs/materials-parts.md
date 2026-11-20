@@ -4,7 +4,7 @@ Code: `src/bun/items.ts`, `src/shared/sku.ts` (code format, SKU folders), `src/m
 
 Raw materials (filament, sheets, …) and purchased parts (screws, standoffs, feet, …) follow the same rules. They differ only in their SKU prefix, their data folder and their specification fields. "Item" below means either one.
 
-Manufactured parts (`2_MANUFACTURED_PARTS/`) are a separate feature: see [manufactured-parts.md](manufactured-parts.md). Materials and purchased parts are used in their composition, and purchased parts in the product composition (see [products.md](products.md#composition)).
+Manufactured parts (`2_MANUFACTURED_PARTS/`) are a separate feature: see [manufactured-parts.md](manufactured-parts.md). Materials and purchased parts are used in their composition, purchased parts in the product and variant composition (see [products.md](products.md#composition)), and both in variant swaps (see [products.md](products.md#swaps)).
 
 |                | Raw material                        | Purchased part                                                   |
 | -------------- | ----------------------------------- | ---------------------------------------------------------------- |
@@ -138,7 +138,7 @@ The header links to the materials list and the purchased parts list (`Purchased 
    - At the top, the item details: SKU, seller, type, specifications, description, seller SKU, current price with its unit, and status.
    - Next to the details, a button to edit the item.
    - The price history, with a button to add a price entry and, on each entry, buttons to edit and delete it.
-   - The manufactured part versions and products that use the item, linking to their page.
+   - The manufactured part versions, products and product variants that use the item, linking to their page. A variant uses the item when it is on one of its lines or is the replacement (Y) of one of its swaps. See [products.md](products.md#swaps).
    - Below, the content of the SKU's system folder. See [file-explorer.md](file-explorer.md).
 
 ## Editing an item

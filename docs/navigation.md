@@ -8,6 +8,7 @@ Code: `src/mainview/layouts/Header.tsx`, the `Page` state in `src/mainview/App.t
 | -------------------- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
 | Product list         | App start, `Products` header link                                                                               | [products.md](products.md)                     |
 | Product page         | A row of the product list, product creation, the origin product of a part version, a used-by list               | [products.md](products.md)                     |
+| Variant page         | A variant on its product page, variant creation or copy, a used-by list                                         | [products.md](products.md#variants)            |
 | Materials list       | `Materials` header link                                                                                         | [materials-parts.md](materials-parts.md)       |
 | Material page        | A row of the materials list, material creation, a composition line                                              | [materials-parts.md](materials-parts.md)       |
 | Purchased parts list | `Purchased parts` header link                                                                                   | [materials-parts.md](materials-parts.md)       |
@@ -27,7 +28,7 @@ The header is only shown once the data folder is open. The first-run, app-outdat
 - The same header is shown on every page: the logo, the list links, the data folder path, then the settings icon.
 - The header stays fixed at the top of the window while the page scrolls.
 - It has the links `Products`, `Parts`, `Materials`, `Purchased parts`, `Operations`, in that order. Each opens the corresponding list. `Parts` is the manufactured parts list, separate from `Purchased parts`.
-- The link of the current list is highlighted. A product, part, material, purchased part or operation page highlights the link of its list.
+- The link of the current list is highlighted. A product, variant, part, material, purchased part or operation page highlights the link of its list.
 - The settings icon is always visible, and highlighted on the settings page.
 - There is no back button: the links replace it.
 

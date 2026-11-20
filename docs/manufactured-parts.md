@@ -10,10 +10,10 @@ Examples:
 ## SKU
 
 ```
-EK-MAN_[ID5]_[partName]_v[N]
+EK-MAN-[ID5]-[partName]-v[N]
 ```
 
-Example: `EK-MAN_00012_toolIdCard_v1`, `EK-MAN_00012_toolIdCard_v2`.
+Example: `EK-MAN-00012-toolIdCard-v1`, `EK-MAN-00012-toolIdCard-v2`.
 
 - `[ID5]`: the ID5 of the origin product: the product the part was first designed for. See [products.md](products.md).
 - `[partName]`: the part name in camelCase. See [Part name](#part-name).
@@ -90,9 +90,9 @@ A list of lines. Each line is one of:
 - A duration is entered as hours, minutes and seconds (`1 h 36 min`, `26 s`).
 - Quantities have at most 3 decimal places. A manufactured part count is a whole number.
 - The composition can be edited in any status. The user adds, edits and removes lines on the version page.
-- An item appears on at most one line: adding an item already in the composition is refused. For a manufactured part, the item is the exact version, so `…_v1` and `…_v2` can be on two lines.
+- An item appears on at most one line: adding an item already in the composition is refused. For a manufactured part, the item is the exact version, so `…-v1` and `…-v2` can be on two lines.
 - Editing a line changes its quantity and, for a manufactured part line, the version of the same part it references. To use another item, the user deletes the line and adds a new one.
-- A manufactured part line references an exact version SKU (`…_v2`), not the part.
+- A manufactured part line references an exact version SKU (`…-v2`), not the part.
 - A version cannot contain itself, directly or through other parts. Adding or changing a line in a way that would create a cycle is refused, and the app says which part closes the loop.
 - Only `Active` items can be picked for a new line: retired materials and purchased parts, and manufactured part versions that are `In development` or `Retired`, cannot be picked. Operations have no status and can always be picked.
 - Existing lines stay when their item's status changes. A line whose item is no longer `Active` is marked with the item's status (`Retired`, `In development`).

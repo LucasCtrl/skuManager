@@ -34,6 +34,7 @@ INSERT INTO status_history (product_id, status, changed_at) VALUES (3, 'In devel
   expect(store.openFolder(dir).kind).toBe("needsMigration");
   expect(store.migrate().state.kind).toBe("ready");
   expect(store.updateProduct(3, "Cable", "", "Research").status).toBe("Research");
+  expect(store.getProduct(3).product.sku).toBe("EK-PRD-00003");
   expect(store.getProduct(3).history.map((h) => h.status)).toEqual([
     "In development",
     "Active",
@@ -55,10 +56,10 @@ test("code format and SKU folders", () => {
   expect(toCode("1.75mm")).toBe("1.75MM");
   expect(toCode("Würth.")).toBe("WURTH");
   expect(toCode("---")).toBe("");
-  expect(skuFolder("EK-PRD_00001")).toBe("1_PRODUCTS");
-  expect(skuFolder("EK-MAT_A_B_C_D_3MM")).toBe("3_MATERIALS");
-  expect(skuFolder("EK-PRT_A_B_M3X5.7")).toBe("4_PARTS");
-  for (const bad of ["EK-MAT_..", "EK-PRT_A_.", "EK-PRT_a", "EK-PRT_A/B", "../EK-PRD_00001"])
+  expect(skuFolder("EK-PRD-00001")).toBe("1_PRODUCTS");
+  expect(skuFolder("EK-MAT-A-B-C-D-3MM")).toBe("3_MATERIALS");
+  expect(skuFolder("EK-PRT-A-B-M3X5.7")).toBe("4_PARTS");
+  for (const bad of ["EK-MAT-..", "EK-PRT-A-.", "EK-PRT-a", "EK-PRT-A/B", "../EK-PRD-00001"])
     expect(() => skuFolder(bad)).toThrow();
 });
 
@@ -105,7 +106,7 @@ test("materials, parts, lists and prices", () => {
     firstPrice: { date: "2026-03-12", amount: 169000 },
   };
   const m = items.createItem(mat);
-  expect(m.sku).toBe("EK-MAT_LACRY_PMMA_BLK_OPQ_3MM");
+  expect(m.sku).toBe("EK-MAT-LACRY-PMMA-BLK-OPQ-3MM");
   expect(m.status).toBe("Active");
   expect(m.price?.amount).toBe(169000);
   expect(existsSync(join(dir, "3_MATERIALS", m.sku))).toBe(true);
@@ -124,7 +125,7 @@ test("materials, parts, lists and prices", () => {
     unitId: piece,
     firstPrice: null,
   });
-  expect(p.sku).toBe("EK-PRT_BOSSARD_STANDOFF_M2X10_MALEFEMALE");
+  expect(p.sku).toBe("EK-PRT-BOSSARD-STANDOFF-M2X10-MALEFEMALE");
   expect(p.price).toBeNull();
   expect(() => items.createItem({ ...mat, kind: "part", specs: ["-"] })).toThrow();
 
@@ -154,9 +155,9 @@ test("materials, parts, lists and prices", () => {
 
   // colour and finish are optional (raw materials)
   const raw = items.createItem({ ...mat, finishId: null, firstPrice: null });
-  expect(raw.sku).toBe("EK-MAT_LACRY_PMMA_BLK_3MM");
+  expect(raw.sku).toBe("EK-MAT-LACRY-PMMA-BLK-3MM");
   expect(items.createItem({ ...mat, colourId: null, finishId: null, firstPrice: null }).sku).toBe(
-    "EK-MAT_LACRY_PMMA_3MM",
+    "EK-MAT-LACRY-PMMA-3MM",
   );
   store.close();
 });
@@ -178,9 +179,12 @@ INSERT INTO items (kind, sku, seller_id, type_id, specs, unit_id, status, create
 INSERT INTO item_prices (item_id, date, cents) VALUES (1, '2026-01-01', 1840);
 `);
   d.close();
+  mkdirSync(join(dir, "4_PARTS", "EK-PRT_S_T_M3"), { recursive: true });
   expect(store.openFolder(dir).kind).toBe("needsMigration");
   expect(store.migrate().state.kind).toBe("ready");
   expect(items.getItem(1).item.price?.amount).toBe(184000);
+  expect(items.getItem(1).item.sku).toBe("EK-PRT-S-T-M3");
+  expect(readdirSync(join(dir, "4_PARTS"))).toEqual(["EK-PRT-S-T-M3"]);
   expect(existsSync(join(dir, "2_MANUFACTURED_PARTS"))).toBe(true);
   expect(existsSync(join(dir, "5_OPERATIONS"))).toBe(true);
   store.close();
@@ -191,9 +195,9 @@ test("part names", () => {
   expect(toPartName("Mini-figure (base)")).toBe("miniFigureBase");
   expect(toPartName("Pièce ßeta 3D")).toBe("pieceEta3d");
   expect(toPartName(" -- ")).toBe("");
-  expect(skuFolder("EK-MAN_00012_toolIdCard_v2")).toBe("2_MANUFACTURED_PARTS");
-  expect(skuFolder("EK-OPE_00001")).toBe("5_OPERATIONS");
-  for (const bad of ["EK-MAN_00012_toolIdCard_v0", "EK-MAN_00012_Tool_v1", "EK-MAN_00012_a/b_v1"])
+  expect(skuFolder("EK-MAN-00012-toolIdCard-v2")).toBe("2_MANUFACTURED_PARTS");
+  expect(skuFolder("EK-OPE-00001")).toBe("5_OPERATIONS");
+  for (const bad of ["EK-MAN-00012-toolIdCard-v0", "EK-MAN-00012-Tool-v1", "EK-MAN-00012-a/b_v1"])
     expect(() => skuFolder(bad)).toThrow();
 });
 
@@ -240,7 +244,7 @@ test("operations, manufactured parts, composition, cost and To review", () => {
     unitId: null,
     firstRate: { date: "2026-01-01", amount: 9500 }, // 0.95 € / h
   });
-  expect(print.sku).toBe("EK-OPE_00001");
+  expect(print.sku).toBe("EK-OPE-00001");
   expect(existsSync(join(dir, "5_OPERATIONS", print.sku))).toBe(true);
   expect(() =>
     operations.createOperation({
@@ -264,16 +268,16 @@ test("operations, manufactured parts, composition, cost and To review", () => {
   // parts: name, preview, clash, orphan folder
   const prd = store.createProduct("Figure", "");
   const prd2 = store.createProduct("Box", "");
-  expect(parts.partSku(prd.id, "Mini figure")).toBe("EK-MAN_00001_miniFigure_v1");
+  expect(parts.partSku(prd.id, "Mini figure")).toBe("EK-MAN-00001-miniFigure-v1");
   const fig = parts.createPart(prd.id, "Mini figure", "");
   expect(fig).toMatchObject({ version: 1, status: "In development", cost: { value: null } });
   expect(existsSync(join(dir, "2_MANUFACTURED_PARTS", fig.sku))).toBe(true);
   expect(() => parts.createPart(prd.id, "MINI-FIGURE", "")).toThrow("already used by Mini figure");
   expect(() => parts.createPart(prd.id, "x".repeat(51), "")).toThrow("50");
-  mkdirSync(join(dir, "2_MANUFACTURED_PARTS", "EK-MAN_00001_base_v3"));
-  expect(() => parts.createPart(prd.id, "Base", "")).toThrow("EK-MAN_00001_base_v3");
+  mkdirSync(join(dir, "2_MANUFACTURED_PARTS", "EK-MAN-00001-base-v3"));
+  expect(() => parts.createPart(prd.id, "Base", "")).toThrow("EK-MAN-00001-base-v3");
   const base = parts.createPart(prd2.id, "Base", ""); // same name, other product: fine
-  expect(base.sku).toBe("EK-MAN_00002_base_v1");
+  expect(base.sku).toBe("EK-MAN-00002-base-v1");
 
   // composition and cost
   const V = (id: number) => ({ kind: "version" as const, id });
@@ -315,8 +319,8 @@ test("operations, manufactured parts, composition, cost and To review", () => {
 
   // new version: next number above the folders, composition and files copied
   writeFileSync(join(dir, "2_MANUFACTURED_PARTS", fig.sku, "a.stl"), "x");
-  mkdirSync(join(dir, "2_MANUFACTURED_PARTS", "EK-MAN_00001_minifigure_v4"));
-  expect(parts.nextVersionSku(fig.id)).toBe("EK-MAN_00001_miniFigure_v5");
+  mkdirSync(join(dir, "2_MANUFACTURED_PARTS", "EK-MAN-00001-minifigure-v4"));
+  expect(parts.nextVersionSku(fig.id)).toBe("EK-MAN-00001-miniFigure-v5");
   const v5 = parts.newVersion(fig.id);
   expect(v5).toMatchObject({ version: 5, status: "In development" });
   expect(existsSync(join(dir, "2_MANUFACTURED_PARTS", v5.sku, "a.stl"))).toBe(true);
@@ -372,13 +376,13 @@ test("init, sku numbering, history, files", () => {
     products: 0,
     dbVersion: APP_VERSION,
   });
-  expect(store.skuOf(store.nextId())).toBe("EK-PRD_00001");
+  expect(store.skuOf(store.nextId())).toBe("EK-PRD-00001");
   const a = store.createProduct(" Cable ", "red");
-  expect(a.sku).toBe("EK-PRD_00001");
-  expect(existsSync(join(dir, "1_PRODUCTS", "EK-PRD_00001"))).toBe(true);
+  expect(a.sku).toBe("EK-PRD-00001");
+  expect(existsSync(join(dir, "1_PRODUCTS", "EK-PRD-00001"))).toBe(true);
   // orphan folder bumps the counter: SKUs are never reassigned
-  mkdirSync(join(dir, "1_PRODUCTS", "EK-PRD_00007"));
-  expect(store.createProduct("Plug", "").sku).toBe("EK-PRD_00008");
+  mkdirSync(join(dir, "1_PRODUCTS", "EK-PRD-00007"));
+  expect(store.createProduct("Plug", "").sku).toBe("EK-PRD-00008");
   expect(() => store.createProduct("  ", "")).toThrow();
 
   store.updateProduct(a.id, "Cable", "red", "Active");
@@ -395,7 +399,7 @@ test("init, sku numbering, history, files", () => {
   expect(files.listDir(a.sku, "docs").map((f) => f.name)).toEqual(["a (copy).txt", "a.txt"]);
   files.move(a.sku, ["docs/a.txt"], "");
   expect(() => files.move(a.sku, ["docs"], "docs")).toThrow();
-  expect(() => files.resolveIn(a.sku, "../EK-PRD_00008")).toThrow();
+  expect(() => files.resolveIn(a.sku, "../EK-PRD-00008")).toThrow();
   expect(() => files.listDir("../x", "")).toThrow();
   expect(() => files.mkdir(a.sku, "", "a/b")).toThrow();
   expect(files.uploadTarget(a.sku, "new/sub/a.txt")).toEndWith(join("new", "sub", "a.txt"));

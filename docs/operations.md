@@ -7,15 +7,15 @@ Operations are used in the composition of manufactured parts. See [manufactured-
 ## SKU
 
 ```
-EK-OPE_[ID5]
+EK-OPE-[ID5]
 ```
 
 `[ID5]` is a 5-digit number, unique per operation. Same rules as the product SKU (see [products.md](products.md)):
 
 - Sequential: `max(id) + 1`, starting at `00001`.
-- The next number is above both the highest id in the database and the highest `EK-OPE_` folder in `5_OPERATIONS/`.
+- The next number is above both the highest id in the database and the highest `EK-OPE-` folder in `5_OPERATIONS/`.
 - Never reused or reassigned.
-- Limit: `EK-OPE_99999`. Creation is refused past it.
+- Limit: `EK-OPE-99999`. Creation is refused past it.
 
 ## Fields
 

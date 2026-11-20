@@ -48,7 +48,7 @@ $D down                        # stop app + Xvfb
 Data folder: `$RUN/data` (`db.sqlite`, `1_PRODUCTS/`, `3_MATERIALS/`, `4_PARTS/`). Check files
 there to confirm what the UI created.
 
-Verified flow: create a raw material with no colour or finish (expects `EK-MAT_DISP_PLY_15MM`):
+Verified flow: create a raw material with no colour or finish (expects `EK-MAT-DISP-PLY-15MM`):
 
 ```bash
 $D up seed
@@ -59,7 +59,7 @@ $D click 858 535 type 15mm     # Thickness or weight
 $D click 528 691 click 420 748 # Price unit popup -> sheet
 $D scroll 10 shot form         # dialog scrolled to the Create button
 $D click 875 770 wait 1 shot created
-ls $RUN/data/3_MATERIALS       # EK-MAT_DISP_PLY_15MM
+ls $RUN/data/3_MATERIALS       # EK-MAT-DISP-PLY-15MM
 $D down
 ```
 

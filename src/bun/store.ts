@@ -2,7 +2,7 @@
 import { Database } from "bun:sqlite";
 import { drizzle, type BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 import { and, asc, desc, eq, getTableColumns, like, or, sql } from "drizzle-orm";
-import { existsSync, mkdirSync, readdirSync, statSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, renameSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { APP_VERSION } from "../shared/version";
 import type { DbState, FolderInfo, Product, Status, StatusChange } from "../shared/rpc";
@@ -14,7 +14,7 @@ import { DIRS, productSku } from "../shared/sku";
 import { markOutdatedLines } from "./composition";
 
 export const PRODUCTS_DIR = DIRS.product;
-export const SKU_RE = /^EK-PRD_(\d{5})$/;
+export const SKU_RE = /^EK-PRD-(\d{5})$/;
 export const skuOf = productSku;
 
 let sqlite: Database | null = null;
@@ -98,12 +98,24 @@ export function openFolder(dir: string): DbState {
         : cmp > 0
           ? { kind: "appOutdated", dbVersion: v, appVersion: APP_VERSION }
           : { kind: "needsMigration", dbVersion: v, appVersion: APP_VERSION };
+    if (state.kind === "ready") renameLegacyFolders();
   } catch (e) {
     sqlite?.close();
     sqlite = db = null;
     state = { kind: "error", message: (e as Error).message };
   }
   return state;
+}
+
+// Renames pre-0.2.0 SKU folders (EK-PRD_00001 → EK-PRD-00001). Runs on every open so a rename that
+// failed (folder locked) is retried. A folder whose new name is taken is left as is, never overwritten.
+function renameLegacyFolders() {
+  for (const d of Object.values(DIRS))
+    for (const f of readdirSync(join(folder!, d))) {
+      if (!/^EK-[A-Z]{3}_/.test(f)) continue;
+      const to = join(folder!, d, f.replaceAll("_", "-"));
+      if (!existsSync(to)) renameSync(join(folder!, d, f), to);
+    }
 }
 
 const BACKUP_RE = /^db\.backup-.*\.sqlite$/;
@@ -132,6 +144,7 @@ export function migrate(): { state: DbState; backup: string } {
   const name = backup();
   runMigrations(state.dbVersion);
   state = { kind: "ready" };
+  renameLegacyFolders();
   return { state, backup: name };
 }
 
@@ -222,7 +235,7 @@ export const nextId = () =>
       .get()!.m,
     PRODUCTS_DIR,
     SKU_RE,
-    "EK-PRD_99999",
+    "EK-PRD-99999",
   );
 
 export function createProduct(name: string, description: string): Product {

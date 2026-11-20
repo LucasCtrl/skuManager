@@ -96,7 +96,7 @@ export function NewItemDialog({
     code(v.sellerId) ?? "[SELLER]",
     code(v.typeId) ?? "[TYPE]",
     ...(isPart
-      ? [specCodes.length ? specCodes.join("_") : "[SPECS]"]
+      ? [specCodes.length ? specCodes.join("-") : "[SPECS]"]
       : [code(v.colourId), code(v.finishId), size || "[SIZE]"].filter((c) => c != null)),
   ]);
   const duplicate = !missing.length && existing.has(sku);

@@ -63,8 +63,8 @@ export const nextOperationId = () =>
       .from(operations)
       .get()!.m,
     DIRS.operation,
-    /^EK-OPE_(\d{5})$/,
-    "EK-OPE_99999",
+    /^EK-OPE-(\d{5})$/,
+    "EK-OPE-99999",
   );
 
 const cleanName = (name: string) => {

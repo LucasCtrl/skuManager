@@ -5,15 +5,15 @@ Code: `src/bun/store.ts`, `src/bun/db/schema.ts`, `src/mainview/pages/products/`
 ## SKU
 
 ```
-EK-PRD_[ID5]
+EK-PRD-[ID5]
 ```
 
 `[ID5]` is a 5-digit number, unique per product.
 
 - Sequential: `max(id) + 1`, starting at `00001`.
-- The next number is above both the highest id in the database and the highest `EK-PRD_` folder in `1_PRODUCTS/`, so a folder left without a database row is never overwritten.
+- The next number is above both the highest id in the database and the highest `EK-PRD-` folder in `1_PRODUCTS/`, so a folder left without a database row is never overwritten.
 - Never reused or reassigned. A retired product keeps its number.
-- Limit: `EK-PRD_99999`. Creation is refused past it.
+- Limit: `EK-PRD-99999`. Creation is refused past it.
 
 ## Fields
 
@@ -69,7 +69,7 @@ Shown when the application opens. See [navigation.md](navigation.md).
 
 The bill of materials of the product. A list of lines, each one:
 
-- a manufactured part version, from any product, with a whole-number count. A line references an exact version SKU (`…_v2`);
+- a manufactured part version, from any product, with a whole-number count. A line references an exact version SKU (`…-v2`);
 - or a purchased part, with a quantity in the part's price unit, at most 3 decimal places.
 
 Rules:

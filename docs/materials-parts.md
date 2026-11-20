@@ -8,7 +8,7 @@ Manufactured parts (`2_MANUFACTURED_PARTS/`) are a separate feature: see [manufa
 
 |                | Raw material                        | Purchased part                                                   |
 | -------------- | ----------------------------------- | ---------------------------------------------------------------- |
-| SKU prefix     | `EK-MAT_`                           | `EK-PRT_`                                                        |
+| SKU prefix     | `EK-MAT-`                           | `EK-PRT-`                                                        |
 | Data folder    | `3_MATERIALS/`                      | `4_PARTS/`                                                       |
 | List           | Materials list                      | Purchased parts list                                             |
 | Type examples  | PLA, PMMA, PETG                     | Screw, standoff, feet                                            |
@@ -17,15 +17,15 @@ Manufactured parts (`2_MANUFACTURED_PARTS/`) are a separate feature: see [manufa
 ## SKU
 
 ```
-EK-MAT_[SELLER]_[TYPE]_[COLOUR]_[FINISH]_[SIZE]
-EK-PRT_[SELLER]_[TYPE]_[SPECS]
+EK-MAT-[SELLER]-[TYPE]-[COLOUR]-[FINISH]-[SIZE]
+EK-PRT-[SELLER]-[TYPE]-[SPECS]
 ```
 
-Examples (illustrative): `EK-MAT_ESUN_PLA_BLK_OPQ_1KG`, `EK-MAT_LACRY_PMMA_BLK_OPQ_3MM`, `EK-MAT_LACRY_PMMA_CLR_3MM`, `EK-MAT_DISP_PLY_15MM`, `EK-PRT_BOSSARD_SCREW_M3X50`, `EK-PRT_BOSSARD_STANDOFF_M3X50_MF`.
+Examples (illustrative): `EK-MAT-ESUN-PLA-BLK-OPQ-1KG`, `EK-MAT-LACRY-PMMA-BLK-OPQ-3MM`, `EK-MAT-LACRY-PMMA-CLR-3MM`, `EK-MAT-DISP-PLY-15MM`, `EK-PRT-BOSSARD-SCREW-M3X50`, `EK-PRT-BOSSARD-STANDOFF-M3X50-MF`.
 
 - `[SELLER]`: the short code of the seller. See [Sellers and types](#sellers-and-types).
 - `[TYPE]`: the short code of the material type or part type.
-- `[COLOUR]_[FINISH]_[SIZE]` (material) and `[SPECS]` (part): codes built by the app from the specification fields. See [Specs code](#specs-code).
+- `[COLOUR]-[FINISH]-[SIZE]` (material) and `[SPECS]` (part): codes built by the app from the specification fields. See [Specs code](#specs-code).
 - Codes are upper case letters, digits and dots. See [Code format](#code-format).
 - No counter. The SKU is unique by the combination of its three codes. Creating an item whose SKU already exists is refused.
 - Seller, type and specifications are locked once the SKU exists. A different seller or a different specification is a new SKU.
@@ -79,7 +79,7 @@ Applies to seller, type, colour and finish codes, and to every part of the specs
 
 ## Specs code
 
-The app builds the specification part of the SKU from the specification fields; the user does not type it. The parts are joined with `_`.
+The app builds the specification part of the SKU from the specification fields; the user does not type it. The parts are joined with `-`.
 
 - Material: colour code, finish code, then thickness or weight, in that order.
   - Colours and finishes are managed lists (name + short code), with the same rules as [sellers and types](#sellers-and-types): created only in the settings page, with confirmation, never changed or deleted. They are optional, as some materials are raw; an empty one is skipped in the SKU.

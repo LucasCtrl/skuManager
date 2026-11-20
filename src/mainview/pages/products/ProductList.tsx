@@ -22,7 +22,7 @@ export function ProductList({ lang, onOpen }: { lang: Lang; onOpen: (id: number)
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
-    api.listProducts({ query: "", status: null }).then(
+    api.listProducts({ query: "" }).then(
       (r) => setTotal(r.length),
       () => {},
     );
@@ -31,7 +31,7 @@ export function ProductList({ lang, onOpen }: { lang: Lang; onOpen: (id: number)
   // Search runs in the backend; the status filter and chip counts are computed here.
   useEffect(() => {
     let stale = false; // ignore out-of-order responses while typing
-    api.listProducts({ query, status: null }).then(
+    api.listProducts({ query }).then(
       (r) => !stale && (setMatched(r), setError(null)),
       (e) => !stale && setError(errMsg(e)),
     );

@@ -3,10 +3,10 @@ import { asc, desc, eq, sql } from "drizzle-orm";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import type { Operation, Price, RateKind } from "../shared/rpc";
-import { DIRS, operationSku } from "../shared/sku";
+import { DIRS, OPERATION_RE, operationSku } from "../shared/sku";
 import { listEntries, operationRates, operations } from "./db/schema";
 import { checkPrice, listAllEntries } from "./items";
-import { dataFolder, nextFreeId, now, ready } from "./store";
+import { cleanName, dataFolder, nextFreeId, now, ready } from "./store";
 
 type Row = typeof operations.$inferSelect;
 
@@ -63,15 +63,9 @@ export const nextOperationId = () =>
       .from(operations)
       .get()!.m,
     DIRS.operation,
-    /^EK-OP-(\d{5})$/,
+    OPERATION_RE,
     "EK-OP-99999",
   );
-
-const cleanName = (name: string) => {
-  const n = name.trim();
-  if (!n) throw new Error("Name is required");
-  return n;
-};
 
 export function createOperation(v: {
   name: string;

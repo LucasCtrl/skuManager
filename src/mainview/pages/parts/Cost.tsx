@@ -1,6 +1,5 @@
 import { type Cost } from "../../../shared/rpc";
-import { fmtMoney, useT } from "../../i18n";
-import { uiLang } from "../items/utils";
+import { fmtMoney, uiLang, useT } from "../../i18n";
 
 // "€1.80", "€1.80 partial" when some line has no price or rate, "—" when nothing is known.
 export function CostText({ cost, currency }: { cost: Cost; currency: string }) {

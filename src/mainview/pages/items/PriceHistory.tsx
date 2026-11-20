@@ -3,8 +3,8 @@ import { type Price } from "../../../shared/rpc";
 import { Icon } from "../../components/Icon";
 import { btn, btnPrimary, card, field, toolBtn } from "../../components/styles";
 import { errMsg, ErrorText } from "../../components/text";
-import { fmtMoney, useT } from "../../i18n";
-import { amountText, day, parseAmount, today, uiLang } from "./utils";
+import { fmtMoney, uiLang, useT } from "../../i18n";
+import { amountText, day, parseAmount, today } from "./utils";
 
 export const priceCols = "grid grid-cols-[160px_160px_minmax(0,1fr)_200px] items-center gap-3 px-5";
 
@@ -150,7 +150,13 @@ export function PriceHistory({
                 type="button"
                 className={`${toolBtn} w-10 justify-center px-0 text-danger hover:bg-danger-soft`}
                 aria-label={t("items.deletePrice", { date: day(p.date) })}
-                onClick={() => run(() => onDelete(p.id))}
+                onClick={() =>
+                  confirm(
+                    t(rate ? "ops.confirmDeleteRate" : "items.confirmDeletePrice", {
+                      date: day(p.date),
+                    }),
+                  ) && run(() => onDelete(p.id))
+                }
               >
                 <Icon name="trash" size={16} />
               </button>

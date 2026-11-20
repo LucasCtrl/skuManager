@@ -162,7 +162,13 @@ export function getItem(id: number): { item: Item; prices: Price[]; history: Ite
 
 // Also checks operation rates.
 export function checkPrice(date: string, amount: number) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date)))
+  // round trip: Date.parse accepts 2026-02-31
+  const t = Date.parse(date);
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+    Number.isNaN(t) ||
+    new Date(t).toISOString().slice(0, 10) !== date
+  )
     throw new Error("Pick a date.");
   if (!Number.isInteger(amount) || amount < 0) throw new Error("Enter a price.");
 }

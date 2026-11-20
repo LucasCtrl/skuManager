@@ -1,5 +1,12 @@
 import { expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, existsSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  mkdirSync,
+  mkdtempSync,
+  existsSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { Database } from "bun:sqlite";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -9,7 +16,7 @@ import * as items from "./items";
 import * as operations from "./operations";
 import * as parts from "./parts";
 import * as composition from "./composition";
-import { skuFolder, toCode, toPartName } from "../shared/sku";
+import { productSku, skuFolder, toCode, toPartName } from "../shared/sku";
 import { compareVersions } from "./db/version";
 import { APP_VERSION } from "../shared/version";
 import { migrations } from "./db/migrations";
@@ -135,6 +142,8 @@ test("materials, parts, lists and prices", () => {
   items.addPrice(m.id, "2026-01-01", 100);
   expect(items.getItem(m.id).item.price?.amount).toBe(1850);
   expect(() => items.addPrice(m.id, "nope", 1)).toThrow();
+  expect(() => items.addPrice(m.id, "2026-02-31", 1)).toThrow("Pick a date");
+  expect(() => items.addPrice(m.id, "2026-13-01", 1)).toThrow("Pick a date");
   expect(() => items.addPrice(m.id, "2026-01-01", 1.5)).toThrow();
   const latest = items.getItem(m.id).prices[0];
   items.deletePrice(latest.id);
@@ -358,7 +367,7 @@ test("operations, manufactured parts, composition, cost and To review", () => {
   expect(siblings.map((s) => s.version)).toEqual([5]);
   const line = composition.getComposition(P).lines.find((l) => l.component.kind === "version")!;
   expect(line).toMatchObject({ toReview: true, status: "Retired" });
-  expect(store.listProducts("Box", null)[0].toReview).toBe(true);
+  expect(store.listProducts("Box")[0].toReview).toBe(true);
   expect(composition.getComposition({ kind: "product", id: prd3.id }).lines[0].toReview).toBe(
     false,
   );
@@ -369,7 +378,7 @@ test("operations, manufactured parts, composition, cost and To review", () => {
   // switching to the Active version clears the mark; mark as reviewed too
   expect(() => composition.updateLine(line.id, 2, base.id)).toThrow("same part");
   composition.updateLine(line.id, 3, v5.id);
-  expect(store.listProducts("Box", null)[0].toReview).toBe(false);
+  expect(store.listProducts("Box")[0].toReview).toBe(false);
   const old = composition.getComposition({ kind: "product", id: prd3.id }).lines[0];
   composition.markReviewed(old.id);
   expect(composition.getComposition({ kind: "product", id: prd3.id }).lines[0].toReview).toBe(
@@ -401,6 +410,33 @@ INSERT INTO operations VALUES (1, 'EK-OPE_00001', 'Cut', '', 'hour', NULL, 't', 
   store.close();
 });
 
+// chmod can't lock a folder on Windows
+test.skipIf(process.platform === "win32")(
+  "a folder that can't be renamed doesn't block opening",
+  () => {
+    const dir = mkdtempSync(join(tmpdir(), "sku-"));
+    store.openFolder(dir);
+    store.close();
+    mkdirSync(join(dir, "1_PRODUCTS", "EK-PRD_00001"));
+    chmodSync(join(dir, "1_PRODUCTS"), 0o555);
+    try {
+      expect(store.openFolder(dir).kind).toBe("ready");
+    } finally {
+      chmodSync(join(dir, "1_PRODUCTS"), 0o755);
+    }
+    expect(store.openFolder(dir).kind).toBe("ready"); // retried once unlocked
+    expect(readdirSync(join(dir, "1_PRODUCTS"))).toEqual(["EK-PRD-00001"]);
+    store.close();
+  },
+);
+
+test("a folder with another app's db.sqlite is left untouched", () => {
+  const dir = mkdtempSync(join(tmpdir(), "sku-"));
+  new Database(join(dir, "db.sqlite")).exec("CREATE TABLE other (x)");
+  expect(store.openFolder(dir).kind).toBe("error");
+  expect(readdirSync(dir)).toEqual(["db.sqlite"]);
+});
+
 test("init, sku numbering, history, files", () => {
   const dir = mkdtempSync(join(tmpdir(), "sku-"));
   expect(store.openFolder(dir).kind).toBe("ready");
@@ -409,7 +445,7 @@ test("init, sku numbering, history, files", () => {
     products: 0,
     dbVersion: APP_VERSION,
   });
-  expect(store.skuOf(store.nextId())).toBe("EK-PRD-00001");
+  expect(productSku(store.nextId())).toBe("EK-PRD-00001");
   const a = store.createProduct(" Cable ", "red");
   expect(a.sku).toBe("EK-PRD-00001");
   expect(existsSync(join(dir, "1_PRODUCTS", "EK-PRD-00001"))).toBe(true);
@@ -421,8 +457,8 @@ test("init, sku numbering, history, files", () => {
   store.updateProduct(a.id, "Cable", "red", "Active");
   store.updateProduct(a.id, "Cable 2", "red", "Active");
   expect(store.getProduct(a.id).history.map((h) => h.status)).toEqual(["In development", "Active"]);
-  expect(store.listProducts("cable", null).length).toBe(1);
-  expect(store.listProducts("", "Active").length).toBe(1);
+  expect(store.listProducts("cable").length).toBe(1);
+  expect(store.listProducts("_").length).toBe(0); // not a LIKE wildcard
 
   // files
   files.mkdir(a.sku, "", "docs");
@@ -435,12 +471,24 @@ test("init, sku numbering, history, files", () => {
   expect(() => files.resolveIn(a.sku, "../EK-PRD-00008")).toThrow();
   expect(() => files.listDir("../x", "")).toThrow();
   expect(() => files.mkdir(a.sku, "", "a/b")).toThrow();
+  for (const n of ["CON", "aux.txt", "Com1", "lpt9.tar.gz"])
+    expect(() => files.mkdir(a.sku, "", n)).toThrow("Invalid name");
+  files.mkdir(a.sku, "", "console"); // only the exact reserved names
+  // rename: refuses a taken name, allows a case-only rename of the same file
+  writeFileSync(files.resolveIn(a.sku, "b.txt"), "b");
+  expect(() => files.rename(a.sku, "b.txt", "a.txt")).toThrow("already exists");
+  expect(readFileSync(files.resolveIn(a.sku, "a.txt"), "utf8")).toBe("x");
+  files.rename(a.sku, "b.txt", "B.txt");
+  if (process.platform === "linux") {
+    writeFileSync(files.resolveIn(a.sku, "b.txt"), "other");
+    expect(() => files.rename(a.sku, "b.txt", "B.txt")).toThrow("already exists");
+  }
   expect(files.uploadTarget(a.sku, "new/sub/a.txt")).toEndWith(join("new", "sub", "a.txt"));
 
   // reopen keeps data
   store.close();
   expect(store.openFolder(dir).kind).toBe("ready");
-  expect(store.listProducts("", null).length).toBe(2);
+  expect(store.listProducts("").length).toBe(2);
   store.close();
 
   // older db → migration with backup; newer db → app outdated
@@ -463,6 +511,6 @@ test("init, sku numbering, history, files", () => {
   store.close();
   set("9.0.0");
   expect(store.openFolder(dir).kind).toBe("appOutdated");
-  expect(() => store.listProducts("", null)).toThrow();
+  expect(() => store.listProducts("")).toThrow();
   store.close();
 });

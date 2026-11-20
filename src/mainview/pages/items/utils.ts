@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
-import { type Item, type Lang } from "../../../shared/rpc";
-import { fmtDay, useT } from "../../i18n";
+import { type Item } from "../../../shared/rpc";
+import { fmtDay, uiLang, useT } from "../../i18n";
 import { api } from "../../rpc";
-
-export const uiLang = (): Lang => (document.documentElement.lang === "fr" ? "fr" : "en");
 
 export const today = () => new Date().toLocaleDateString("sv-SE"); // YYYY-MM-DD, local time
 

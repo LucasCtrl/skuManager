@@ -1,7 +1,7 @@
 // Data folder + database. No Electrobun imports here so it runs under `bun test`.
 import { Database } from "bun:sqlite";
 import { drizzle, type BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
-import { and, asc, desc, eq, getTableColumns, like, or, sql } from "drizzle-orm";
+import { asc, desc, eq, getTableColumns, sql } from "drizzle-orm";
 import { existsSync, mkdirSync, readdirSync, renameSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { APP_VERSION } from "../shared/version";
@@ -10,12 +10,8 @@ import { STATUSES } from "../shared/rpc";
 import { products, statusHistory } from "./db/schema";
 import { migrations } from "./db/migrations";
 import { compareVersions } from "./db/version";
-import { DIRS, productSku } from "../shared/sku";
+import { DIRS, PRODUCT_RE, productSku } from "../shared/sku";
 import { markOutdatedLines } from "./composition";
-
-export const PRODUCTS_DIR = DIRS.product;
-export const SKU_RE = /^EK-PRD-(\d{5})$/;
-export const skuOf = productSku;
 
 let sqlite: Database | null = null;
 let db: BunSQLiteDatabase | null = null;
@@ -25,7 +21,7 @@ let state: DbState = { kind: "noFolder" };
 export const getState = () => state;
 export const productsDir = () => {
   if (!folder) throw new Error("No data folder selected");
-  return join(folder, PRODUCTS_DIR);
+  return join(folder, DIRS.product);
 };
 
 export function ready() {
@@ -76,7 +72,6 @@ export function close() {
 export function openFolder(dir: string): DbState {
   close();
   try {
-    for (const d of Object.values(DIRS)) mkdirSync(join(dir, d), { recursive: true });
     sqlite = new Database(join(dir, "db.sqlite"), { create: true });
     sqlite.exec("PRAGMA foreign_keys = ON");
     folder = dir;
@@ -91,6 +86,8 @@ export function openFolder(dir: string): DbState {
 
     const v = dbVersion();
     if (!v) throw new Error("db.sqlite has no version");
+    // after the checks, so a folder holding someone else's db.sqlite is left untouched
+    for (const d of Object.values(DIRS)) mkdirSync(join(dir, d), { recursive: true });
     const cmp = compareVersions(v, APP_VERSION);
     state =
       cmp === 0
@@ -121,7 +118,9 @@ function upgradeSkus() {
     for (const f of readdirSync(join(folder!, d))) {
       const to = join(folder!, d, newSku(f));
       if (f.startsWith("EK-") && newSku(f) !== f && !existsSync(to))
-        renameSync(join(folder!, d, f), to);
+        try {
+          renameSync(join(folder!, d, f), to);
+        } catch {} // locked (file open on Windows): retried on next open
     }
 }
 
@@ -177,11 +176,8 @@ export function inspectFolder(dir: string): FolderInfo {
 
 // ---------- products ----------
 
-export function listProducts(
-  query: string,
-  status: Status | null,
-): (Product & { toReview: boolean })[] {
-  const q = `%${query.trim()}%`;
+export function listProducts(query: string): (Product & { toReview: boolean })[] {
+  const q = query.trim(); // plain substring, like the other lists (LIKE would treat _ and % as wildcards)
   return ready()
     .select({
       ...getTableColumns(products),
@@ -193,12 +189,9 @@ export function listProducts(
     })
     .from(products)
     .where(
-      and(
-        query.trim()
-          ? or(like(products.sku, q), like(products.name, q), like(products.description, q))
-          : undefined,
-        status ? eq(products.status, status) : undefined,
-      ),
+      q
+        ? sql`instr(lower(${products.sku} || ' ' || ${products.name} || ' ' || ${products.description}), lower(${q})) > 0`
+        : undefined,
     )
     .orderBy(desc(products.id))
     .all();
@@ -217,7 +210,7 @@ export function getProduct(id: number): { product: Product; history: StatusChang
   return { product, history };
 }
 
-function cleanName(name: string) {
+export function cleanName(name: string) {
   const n = name.trim();
   if (!n) throw new Error("Name is required");
   return n;
@@ -240,8 +233,8 @@ export const nextId = () =>
       .select({ m: sql<number>`coalesce(max(${products.id}), 0)` })
       .from(products)
       .get()!.m,
-    PRODUCTS_DIR,
-    SKU_RE,
+    DIRS.product,
+    PRODUCT_RE,
     "EK-PRD-99999",
   );
 
@@ -253,7 +246,7 @@ export function createProduct(name: string, description: string): Product {
     const t = now();
     const p: Product = {
       id,
-      sku: skuOf(id),
+      sku: productSku(id),
       name: n,
       description: description.trim(),
       status: "In development",

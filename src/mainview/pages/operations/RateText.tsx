@@ -1,6 +1,5 @@
 import { type Operation } from "../../../shared/rpc";
-import { fmtMoney } from "../../i18n";
-import { uiLang } from "../items/utils";
+import { fmtMoney, uiLang } from "../../i18n";
 
 export const rateUnit = (o: Operation) => (o.rateKind === "hour" ? "h" : o.unit!.name);
 

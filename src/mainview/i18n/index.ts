@@ -18,8 +18,11 @@ export type T = ReturnType<typeof makeT>;
 export const TContext = createContext<T>(makeT("en"));
 export const useT = () => useContext(TContext);
 
-// Day-first formats, as in the design ("14 Sep 2026").
+// Current UI language, for formatters outside React props.
+export const uiLang = (): Lang => (document.documentElement.lang === "fr" ? "fr" : "en");
+
 export const locale = (lang: Lang) => (lang === "fr" ? "fr-FR" : "en-GB");
+// Day-first formats, as in the design ("14 Sep 2026").
 export const fmtDay = (d: string | number, lang: Lang) =>
   new Date(d).toLocaleDateString(locale(lang), { day: "numeric", month: "short", year: "numeric" });
 export const fmtDateTime = (d: string | number, lang: Lang) =>

@@ -3,7 +3,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { AppRPC, Settings } from "../shared/rpc";
 import { APP_VERSION } from "../shared/version";
-import { operationSku } from "../shared/sku";
+import { operationSku, productSku } from "../shared/sku";
 import * as store from "./store";
 import * as files from "./files";
 import * as items from "./items";
@@ -99,8 +99,8 @@ const rpc = BrowserView.defineRPC<AppRPC>({
         Utils.quit();
       },
 
-      nextSku: () => store.skuOf(store.nextId()),
-      listProducts: ({ query, status }) => store.listProducts(query, status),
+      nextSku: () => productSku(store.nextId()),
+      listProducts: ({ query }) => store.listProducts(query),
       getProduct: ({ id }) => store.getProduct(id),
       createProduct: ({ name, description }) => store.createProduct(name, description),
       updateProduct: ({ id, name, description, status }) =>

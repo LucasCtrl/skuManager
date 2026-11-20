@@ -37,12 +37,14 @@ export const itemSku = (kind: ItemKind, codes: string[]) => ITEM_PREFIX[kind] + 
 
 const SEG = "[A-Z0-9](?:[A-Z0-9.]*[A-Z0-9])?";
 const ITEM_RE = new RegExp(`^EK-(MAT|PRT)(-${SEG})+$`);
+export const PRODUCT_RE = /^EK-PRD-(\d{5})$/;
+export const OPERATION_RE = /^EK-OP-(\d{5})$/;
 export const VERSION_RE = /^EK-MAN-(\d{5})-([a-z0-9][A-Za-z0-9]*)-v([1-9]\d*)$/;
 
 // Data subfolder holding a SKU's folder. Throws on anything that isn't a SKU (path guard).
 export function skuFolder(sku: string) {
-  if (/^EK-PRD-\d{5}$/.test(sku)) return DIRS.product;
-  if (/^EK-OP-\d{5}$/.test(sku)) return DIRS.operation;
+  if (PRODUCT_RE.test(sku)) return DIRS.product;
+  if (OPERATION_RE.test(sku)) return DIRS.operation;
   if (VERSION_RE.test(sku)) return DIRS.version;
   const m = ITEM_RE.exec(sku);
   if (m) return m[1] === "MAT" ? DIRS.material : DIRS.part;

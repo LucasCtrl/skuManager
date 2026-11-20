@@ -171,10 +171,7 @@ export type AppRPC = {
       getInfo: Req<{}, AppInfo>;
       quit: Req<{}, void>;
 
-      listProducts: Req<
-        { query: string; status: Status | null },
-        (Product & { toReview: boolean })[]
-      >;
+      listProducts: Req<{ query: string }, (Product & { toReview: boolean })[]>;
       getProduct: Req<{ id: number }, { product: Product; history: StatusChange[] }>;
       nextSku: Req<{}, string>;
       createProduct: Req<{ name: string; description: string }, Product>;

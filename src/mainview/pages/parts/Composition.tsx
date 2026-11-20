@@ -141,7 +141,10 @@ export function Composition({
                   type="button"
                   className={`${toolBtn} w-10 justify-center px-0 text-danger hover:bg-danger-soft`}
                   aria-label={t("comp.deleteLine", { sku: l.sku })}
-                  onClick={() => run(() => api.deleteLine({ id: l.id }))}
+                  onClick={() =>
+                    confirm(t("comp.confirmDelete", { sku: l.sku })) &&
+                    run(() => api.deleteLine({ id: l.id }))
+                  }
                 >
                   <Icon name="trash" size={16} />
                 </button>

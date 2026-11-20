@@ -6,10 +6,10 @@ import { SearchField } from "../../components/SearchField";
 import { StatusBadge } from "../../components/status";
 import { btnPrimary, card } from "../../components/styles";
 import { errMsg, ErrorText } from "../../components/text";
-import { fmtMoney, useT } from "../../i18n";
+import { fmtMoney, useT, uiLang } from "../../i18n";
 import { api } from "../../rpc";
 import { NewItemDialog } from "./NewItemDialog";
-import { uiLang, useCurrency } from "./utils";
+import { useCurrency } from "./utils";
 
 export const listCols = "grid grid-cols-[320px_120px_minmax(0,1fr)_150px_100px] gap-4";
 

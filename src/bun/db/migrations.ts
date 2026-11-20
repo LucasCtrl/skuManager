@@ -89,7 +89,7 @@ INSERT INTO meta (key, value) VALUES ('currency', '€');
 `,
   },
   {
-    // Prices to 4 decimals (ten-thousandths), operations, manufactured parts and compositions, '-' SKU separator.
+    // Prices to 4 decimals (ten-thousandths), operations, manufactured parts and compositions. SKU separator: see store.upgradeSkus.
     version: "0.2.0",
     sql: `
 ALTER TABLE item_prices RENAME COLUMN cents TO amount;
@@ -157,9 +157,6 @@ CREATE UNIQUE INDEX composition_lines_unique ON composition_lines(
 	coalesce(item_id, 0), coalesce(operation_id, 0), coalesce(part_version_id, 0)
 );
 CREATE INDEX composition_lines_part_version ON composition_lines(part_version_id);
--- SKU separator '_' becomes '-' (folders are renamed by store.renameLegacyFolders)
-UPDATE products SET sku = replace(sku, '_', '-');
-UPDATE items SET sku = replace(sku, '_', '-');
 `,
   },
 ];

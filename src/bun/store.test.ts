@@ -368,6 +368,25 @@ test("operations, manufactured parts, composition, cost and To review", () => {
   store.close();
 });
 
+test("old SKUs in a current db are converted on open, folders included", () => {
+  const dir = mkdtempSync(join(tmpdir(), "sku-"));
+  expect(store.openFolder(dir)).toEqual({ kind: "ready" }); // fresh db at the current version
+  store.close();
+  const d = new Database(join(dir, "db.sqlite"));
+  d.exec(`
+INSERT INTO products VALUES (1, 'EK-PRD_00001', 'Box', '', 'Active', 't', 't');
+INSERT INTO operations VALUES (1, 'EK-OPE_00001', 'Cut', '', 'hour', NULL, 't', 't');
+`);
+  d.close();
+  mkdirSync(join(dir, "1_PRODUCTS", "EK-PRD-00001"), { recursive: true }); // already renamed
+  mkdirSync(join(dir, "5_OPERATIONS", "EK-OPE-00001"), { recursive: true });
+  expect(store.openFolder(dir).kind).toBe("ready");
+  expect(store.getProduct(1).product.sku).toBe("EK-PRD-00001");
+  expect(operations.getOperation(1).operation.sku).toBe("EK-OP-00001");
+  expect(readdirSync(join(dir, "5_OPERATIONS"))).toEqual(["EK-OP-00001"]);
+  store.close();
+});
+
 test("init, sku numbering, history, files", () => {
   const dir = mkdtempSync(join(tmpdir(), "sku-"));
   expect(store.openFolder(dir).kind).toBe("ready");

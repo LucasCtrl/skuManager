@@ -98,7 +98,7 @@ export function openFolder(dir: string): DbState {
         : cmp > 0
           ? { kind: "appOutdated", dbVersion: v, appVersion: APP_VERSION }
           : { kind: "needsMigration", dbVersion: v, appVersion: APP_VERSION };
-    if (state.kind === "ready") renameLegacyFolders();
+    if (state.kind === "ready") upgradeSkus();
   } catch (e) {
     sqlite?.close();
     sqlite = db = null;
@@ -107,14 +107,21 @@ export function openFolder(dir: string): DbState {
   return state;
 }
 
-// Renames pre-0.2.0 SKU folders (EK-PRD_00001 → EK-PRD-00001). Runs on every open so a rename that
-// failed (folder locked) is retried. A folder whose new name is taken is left as is, never overwritten.
-function renameLegacyFolders() {
+// Old SKU formats (EK-PRD_00001, EK-OPE-00001) → current (EK-PRD-00001, EK-OP-00001), in the db and the folders.
+// Not a versioned migration: it runs on every open, so dev dbs already at 0.2.0 are fixed too and a folder
+// rename that failed (folder locked) is retried. A folder whose new name is taken is left as is, never overwritten.
+const newSku = (s: string) => s.replaceAll("_", "-").replace(/^EK-OPE-/, "EK-OP-");
+function upgradeSkus() {
+  const s = sqlite!;
+  s.transaction(() => {
+    for (const t of ["products", "items", "part_versions", "operations"])
+      s.run(`UPDATE ${t} SET sku = replace(replace(sku, '_', '-'), 'EK-OPE-', 'EK-OP-')`);
+  })();
   for (const d of Object.values(DIRS))
     for (const f of readdirSync(join(folder!, d))) {
-      if (!/^EK-[A-Z]{3}_/.test(f)) continue;
-      const to = join(folder!, d, f.replaceAll("_", "-"));
-      if (!existsSync(to)) renameSync(join(folder!, d, f), to);
+      const to = join(folder!, d, newSku(f));
+      if (f.startsWith("EK-") && newSku(f) !== f && !existsSync(to))
+        renameSync(join(folder!, d, f), to);
     }
 }
 
@@ -144,7 +151,7 @@ export function migrate(): { state: DbState; backup: string } {
   const name = backup();
   runMigrations(state.dbVersion);
   state = { kind: "ready" };
-  renameLegacyFolders();
+  upgradeSkus();
   return { state, backup: name };
 }
 

@@ -133,7 +133,9 @@ export function AddLineDialog({
 }) {
   const t = useT();
   const picks: Pick[] =
-    owner.kind !== "version" ? ["version", "part"] : ["material", "operation", "part", "version"];
+    owner.kind !== "version"
+      ? ["version", "part", "operation"]
+      : ["material", "operation", "part", "version"];
   const [pick, setPick] = useState<Pick>(picks[0]);
   const [list, setList] = useState<Candidate[] | null>(null);
   const [chosen, setChosen] = useState<Candidate | null>(null);

@@ -326,8 +326,10 @@ test("operations, manufactured parts, composition, cost and To review", () => {
   parts.updatePartVersion(fig.id, "", "Active");
   composition.addLine(P, V(fig.id), 2);
   composition.addLine(P, { kind: "item", id: screw.id }, 4000);
+  composition.addLine(P, { kind: "operation", id: print.id }, 1800); // batch labour, once per product
   c = composition.getComposition(P);
-  expect(c.cost.value).toBeCloseTo(2 * 1.8 + 4 * 0.023);
+  expect(c.lines[2].measure).toBe("duration");
+  expect(c.cost.value).toBeCloseTo(2 * 1.8 + 4 * 0.023 + c.lines[2].cost.value!);
   expect(c.cost.partial).toBe(true); // through the version
   expect(composition.usedBy(V(fig.id))).toEqual([
     { kind: "product", id: prd2.id, sku: prd2.sku, name: "Box" },

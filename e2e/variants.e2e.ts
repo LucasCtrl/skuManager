@@ -49,6 +49,13 @@ export default async function ({ page, rpc, step }: Ctx) {
   const P = { kind: "product" as const, id: prd.id };
   await rpc("addLine", { owner: P, component: { kind: "version", id: card.id }, quantity: 10 });
   await rpc("addLine", { owner: P, component: { kind: "item", id: s.id }, quantity: 1000 });
+  await rpc("createOperation", {
+    name: "Packing",
+    description: "",
+    rateKind: "hour",
+    unitId: null,
+    firstRate: { date: "2026-01-01", amount: 200000 }, // €20 / h
+  });
   await page.reload();
 
   const main = page.locator("main");
@@ -203,6 +210,17 @@ export default async function ({ page, rpc, step }: Ctx) {
     await see("2 lines");
     await see("€8.05");
     assert.match(confirms.at(-1)!, /last one: its composition moves back to the product/);
+  });
+
+  await step("an operation counts once on the product", async () => {
+    await main.getByRole("button", { name: "Add line" }).click();
+    await page.locator("#line-kind").selectOption({ label: "Operation" });
+    await page.locator("#line-item option").nth(1).waitFor({ state: "attached" });
+    await page.locator("#line-item").selectOption({ index: 1 });
+    await page.getByLabel("Minutes").fill("30");
+    await dialog.getByRole("button", { name: "Add line" }).click();
+    await see("3 lines");
+    await see("€18.05");
   });
 
   await step("French", async () => {

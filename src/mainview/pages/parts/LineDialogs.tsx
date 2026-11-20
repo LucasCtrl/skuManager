@@ -52,14 +52,14 @@ function QuantityInput({
         {["h", "min", "s"].map((u, i) => (
           <div
             key={u}
-            className="box-border flex h-11 flex-1 items-center gap-1.5 rounded-lg border border-line-strong bg-surface px-3 focus-within:border-ink"
+            className="box-border flex h-11 min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-line-strong bg-surface px-3 focus-within:border-ink"
           >
             <input
               inputMode="numeric"
               autoFocus={i === 0}
               aria-label={t(`line.duration.${u}`)}
               placeholder="0"
-              className="min-w-0 flex-1 border-0 bg-transparent text-right text-[15px] tabular-nums text-ink outline-none focus-visible:outline-none"
+              className="w-0 min-w-0 flex-1 border-0 bg-transparent text-right text-[15px] tabular-nums text-ink outline-none focus-visible:outline-none"
               value={hms[i]}
               onChange={(e) => editHms(hms.map((x, j) => (j === i ? e.target.value : x)))}
             />

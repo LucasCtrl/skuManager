@@ -75,7 +75,8 @@ Shown when the application opens. See [navigation.md](navigation.md).
 The bill of materials of the product. A product without variants holds its composition; a product with variants holds none, each variant has its own (see [Variants](#variants)). A list of lines, each one:
 
 - a manufactured part version, from any product, with a whole-number count. A line references an exact version SKU (`…-v2`);
-- or a purchased part, with a quantity in the part's price unit, at most 3 decimal places.
+- or a purchased part, with a quantity in the part's price unit, at most 3 decimal places;
+- or an operation, with a quantity that depends on its rate kind (see [operations.md](operations.md#rate)). It counts once for the product or variant, not per part: the labour of printing a batch of 5 parts goes on the product, not on the part.
 
 Rules:
 
@@ -83,13 +84,13 @@ Rules:
 - The composition can be edited unless the product is `Retired`.
 - The rules below apply the same way to a variant's composition, which follows its product's status.
 - Same line rules as a manufactured part: one line per item (per exact version), lines can be reordered, and editing a line changes its quantity and the version of the same part. See [manufactured-parts.md](manufactured-parts.md#composition).
-- Only `Active` items can be picked for a new line: retired purchased parts, and manufactured part versions that are `In development` or `Retired`, cannot be picked. Existing lines stay when their item's status changes, marked with that status.
+- Only `Active` items can be picked for a new line: retired purchased parts, and manufactured part versions that are `In development` or `Retired`, cannot be picked. Operations have no status and can always be picked. Existing lines stay when their item's status changes, marked with that status.
 - A line is marked `To review` when another version of its manufactured part becomes `Active`, unless the product is `Retired` (its composition is locked, so the mark could not be cleared). The mark also shows on the variant row and page, and on the product list row. See [manufactured-parts.md](manufactured-parts.md#to-review).
 - When a product leaves `Retired`, every manufactured part line of the product or its variants that does not reference the `Active` version of its part is marked `To review` (a part with no `Active` version marks nothing).
 
 ## Cost
 
-Computed from the composition with the current prices, never stored: line quantity × current price (purchased part) or × the version cost (manufactured part), summed. Same display and partial rules as a manufactured part. See [manufactured-parts.md](manufactured-parts.md#cost).
+Computed from the composition with the current prices, never stored: line quantity × current price (purchased part), × the version cost (manufactured part) or the operation cost (see [operations.md](operations.md#rate)), summed. Same display and partial rules as a manufactured part. See [manufactured-parts.md](manufactured-parts.md#cost).
 
 - Product without variants: the cost of its composition.
 - Variant: the cost of its composition with its [swaps](#swaps) applied.

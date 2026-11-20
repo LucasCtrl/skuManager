@@ -370,7 +370,7 @@ function checkComponent(owner: Owner, c: Component): CompositionLine["measure"] 
     const i = d.select().from(items).where(eq(items.id, c.id)).get();
     if (!i) throw new Error(`Item ${c.id} not found`);
     if (owner.kind !== "version" && i.kind !== "part")
-      throw new Error("A product's composition only holds manufactured and purchased parts.");
+      throw new Error("A product's composition only holds parts and operations.");
     if (i.status !== "Active")
       throw new Error(`${i.sku} is ${i.status}: only Active items can be picked.`);
     return "quantity";
@@ -378,8 +378,6 @@ function checkComponent(owner: Owner, c: Component): CompositionLine["measure"] 
   if (c.kind === "operation") {
     const o = d.select().from(operations).where(eq(operations.id, c.id)).get();
     if (!o) throw new Error(`Operation ${c.id} not found`);
-    if (owner.kind !== "version")
-      throw new Error("A product's composition only holds manufactured and purchased parts.");
     return o.rateKind === "hour" ? "duration" : "quantity";
   }
   if (c.kind === "version") {

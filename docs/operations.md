@@ -2,7 +2,7 @@
 
 The operations needed to turn raw materials into a finished part: 3D printing, laser cutting, laser engraving, sanding, painting, bending, assembly, …
 
-Operations are used in the composition of manufactured parts. See [manufactured-parts.md](manufactured-parts.md).
+Operations are used in the composition of manufactured parts, products and product variants. See [manufactured-parts.md](manufactured-parts.md) and [products.md](products.md#composition). On a product or variant, an operation counts once for the whole batch (the manual labour of printing 5 parts), not per part.
 
 ## SKU
 
@@ -69,7 +69,7 @@ Works like the product list (see [products.md](products.md)).
    - At the top, the operation details: SKU, name, description, rate kind, rate unit and current rate.
    - Next to the details, a button to edit the operation.
    - The rate history, with a button to add a rate entry and, on each entry, buttons to edit and delete it.
-   - The manufactured part versions that use the operation, linking to their page.
+   - The manufactured part versions, products and product variants that use the operation, linking to their page.
    - Below, the content of the SKU's system folder (machine profiles, settings files, …). See [file-explorer.md](file-explorer.md).
 
 ## Editing an operation

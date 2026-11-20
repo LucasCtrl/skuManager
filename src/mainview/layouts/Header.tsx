@@ -14,17 +14,23 @@ export function Header({
   onNavigate: (p: Page) => void;
 }) {
   const t = useT();
-  // A product, material or part page highlights the link of its list.
+  // A product, part, material, purchased part or operation page highlights the link of its list.
   const current =
-    page.name === "list" || page.name === "product"
+    page.name === "list" || page.name === "product" || page.name === "variant"
       ? "products"
-      : page.name === "items" || page.name === "item"
-        ? page.kind
-        : null;
+      : page.name === "parts" || page.name === "version"
+        ? "manufactured"
+        : page.name === "items" || page.name === "item"
+          ? page.kind
+          : page.name === "operations" || page.name === "operation"
+            ? "operations"
+            : null;
   const links: [string, string, Page][] = [
     ["products", t("app.products"), { name: "list" }],
+    ["manufactured", t("app.manufactured"), { name: "parts" }],
     ["material", t("app.materials"), { name: "items", kind: "material" }],
     ["part", t("app.parts"), { name: "items", kind: "part" }],
+    ["operations", t("app.operations"), { name: "operations" }],
   ];
   return (
     <header className="sticky top-0 z-10 flex flex-wrap items-center gap-4 border-b border-line bg-surface px-6 py-2.5">

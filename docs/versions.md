@@ -22,6 +22,8 @@ The version is stored in the database, so the app can check that the database ma
 
 A popup explains what will happen. On confirm, the app copies `db.sqlite` to `db.backup-v<version>-<YYYY-MM-DD>.sqlite` (`-2`, `-3`, … appended if that name exists), then migrates.
 
+Each time a data folder opens, SKUs in the old formats are converted in the database and their folders renamed: `_` becomes `-` (`EK-PRD_00001` → `EK-PRD-00001`) and `EK-OPE-` becomes `EK-OP-`. It is safe to repeat, so a folder rename that failed (folder locked) is retried on the next open. A folder whose new name already exists is left untouched.
+
 ## Bumping the version
 
 Change `APP_VERSION` in `src/shared/version.ts` (single source of truth). If the schema changes, add an entry to `src/bun/db/migrations.ts` and update `schema.ts`.

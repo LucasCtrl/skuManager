@@ -9,6 +9,16 @@ export default {
     build:
       "hutch electrobun prepare && hutch pm exec -- vite build && hutch electrobun build --env=stable",
     test: ["bun", "test"],
+    e2e: ["bun", "e2e/run.ts"],
+    "e2e:install": [
+      "hutch",
+      "pm",
+      "exec",
+      "--",
+      "playwright-core",
+      "install",
+      "chromium-headless-shell",
+    ],
     lint: ["hutch", "pm", "exec", "--", "oxlint"],
     fmt: ["hutch", "pm", "exec", "--", "oxfmt"],
     "fmt:check": ["hutch", "pm", "exec", "--", "oxfmt", "--check"],

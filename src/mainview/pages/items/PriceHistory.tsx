@@ -1,23 +1,31 @@
 import { useState } from "react";
-import { type Item, type Price } from "../../../shared/rpc";
+import { type Price } from "../../../shared/rpc";
 import { Icon } from "../../components/Icon";
 import { btn, btnPrimary, card, field, toolBtn } from "../../components/styles";
 import { errMsg, ErrorText } from "../../components/text";
-import { fmtMoney, useT } from "../../i18n";
-import { api } from "../../rpc";
-import { centsText, day, parseCents, today, uiLang } from "./utils";
+import { fmtMoney, uiLang, useT } from "../../i18n";
+import { amountText, day, parseAmount, today } from "./utils";
 
 export const priceCols = "grid grid-cols-[160px_160px_minmax(0,1fr)_200px] items-center gap-3 px-5";
 
+// Price history of an item, or rate history of an operation (`rate`).
 export function PriceHistory({
-  item,
+  unit,
   prices,
   currency,
+  rate = false,
+  onAdd,
+  onUpdate,
+  onDelete,
   onChange,
 }: {
-  item: Item;
+  unit: string;
   prices: Price[];
   currency: string;
+  rate?: boolean;
+  onAdd: (date: string, amount: number) => Promise<unknown>;
+  onUpdate: (id: number, date: string, amount: number) => Promise<unknown>;
+  onDelete: (id: number) => Promise<unknown>;
   onChange: () => Promise<unknown>;
 }) {
   const t = useT();
@@ -30,7 +38,7 @@ export function PriceHistory({
   const open = (m: "add" | Price) => {
     setMode(m === "add" ? m : m.id);
     setDate(m === "add" ? today() : m.date);
-    setPrice(m === "add" ? "" : centsText(m.cents));
+    setPrice(m === "add" ? "" : amountText(m.amount));
     setError(null);
   };
   const run = async (fn: () => Promise<unknown>) => {
@@ -43,14 +51,10 @@ export function PriceHistory({
     }
   };
   const save = () => {
-    const cents = parseCents(price);
+    const amount = parseAmount(price);
     if (!date) return setError(t("items.pickDate"));
-    if (cents === null) return setError(t("items.enterPrice"));
-    run(() =>
-      mode === "add"
-        ? api.addPrice({ itemId: item.id, date, cents })
-        : api.updatePrice({ id: mode as number, date, cents }),
-    );
+    if (amount === null) return setError(t("items.enterPrice"));
+    run(() => (mode === "add" ? onAdd(date, amount) : onUpdate(mode as number, date, amount)));
   };
 
   const editRow = (
@@ -95,16 +99,16 @@ export function PriceHistory({
     <section aria-labelledby="ph-title" className={card}>
       <div className="box-border flex min-h-16 flex-wrap items-center gap-3 border-b border-line py-2.5 pl-5 pr-3">
         <h2 id="ph-title" className="m-0 text-base font-semibold">
-          {t("items.priceHistory")}
+          {t(rate ? "ops.rateHistory" : "items.priceHistory")}
         </h2>
         <span className="text-[13px] text-muted">
-          {t("items.priceNote", { unit: item.unit.code })}
+          {t(rate ? "ops.rateNote" : "items.priceNote", { unit })}
         </span>
         <span className="ml-auto" />
         {mode === null && (
           <button type="button" className={toolBtn} onClick={() => open("add")}>
             <Icon name="plus" size={16} strokeWidth={2} />
-            {t("items.addPrice")}
+            {t(rate ? "ops.addRate" : "items.addPrice")}
           </button>
         )}
       </div>
@@ -112,7 +116,7 @@ export function PriceHistory({
         className={`${priceCols} h-10 border-b border-line bg-subtle text-xs font-medium uppercase tracking-[0.06em] text-muted`}
       >
         <span>{t("items.date")}</span>
-        <span className="text-right">{t("items.price")}</span>
+        <span className="text-right">{t(rate ? "ops.rate" : "items.price")}</span>
         <span />
         <span />
       </div>
@@ -124,7 +128,7 @@ export function PriceHistory({
           <div key={p.id} className={`${priceCols} min-h-12 border-b border-divider`}>
             <span className="text-sm tabular-nums">{day(p.date)}</span>
             <span className="text-right text-sm font-medium tabular-nums">
-              {fmtMoney(p.cents, currency, uiLang())}
+              {fmtMoney(p.amount / 1e4, currency, uiLang(), 4)}
             </span>
             <span>
               {n === 0 && (
@@ -146,7 +150,13 @@ export function PriceHistory({
                 type="button"
                 className={`${toolBtn} w-10 justify-center px-0 text-danger hover:bg-danger-soft`}
                 aria-label={t("items.deletePrice", { date: day(p.date) })}
-                onClick={() => run(() => api.deletePrice({ id: p.id }))}
+                onClick={() =>
+                  confirm(
+                    t(rate ? "ops.confirmDeleteRate" : "items.confirmDeletePrice", {
+                      date: day(p.date),
+                    }),
+                  ) && run(() => onDelete(p.id))
+                }
               >
                 <Icon name="trash" size={16} />
               </button>
@@ -155,7 +165,9 @@ export function PriceHistory({
         ),
       )}
       {!prices.length && mode !== "add" && (
-        <div className="px-5 py-8 text-center text-sm text-muted">{t("items.noPrice")}</div>
+        <div className="px-5 py-8 text-center text-sm text-muted">
+          {t(rate ? "ops.noRate" : "items.noPrice")}
+        </div>
       )}
       {mode === null && error && (
         <div className="px-5 py-3">

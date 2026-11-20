@@ -9,7 +9,7 @@ import { btn, btnPrimary, field, mono, toolBtn } from "../../components/styles";
 import { Code, ErrorText, Rich } from "../../components/text";
 import { useT } from "../../i18n";
 import { api } from "../../rpc";
-import { parseCents, today } from "./utils";
+import { parseAmount, today } from "./utils";
 
 export function Select({
   id,
@@ -89,14 +89,14 @@ export function NewItemDialog({
     if (!size) missing.push(t("items.need.size"));
   }
   if (!v.unitId) missing.push(t("items.need.unit"));
-  const cents = v.price.trim() ? parseCents(v.price) : null;
-  const badPrice = v.price.trim() !== "" && cents === null;
+  const amount = v.price.trim() ? parseAmount(v.price) : null;
+  const badPrice = v.price.trim() !== "" && amount === null;
 
   const sku = itemSku(kind, [
     code(v.sellerId) ?? "[SELLER]",
     code(v.typeId) ?? "[TYPE]",
     ...(isPart
-      ? [specCodes.length ? specCodes.join("_") : "[SPECS]"]
+      ? [specCodes.length ? specCodes.join("-") : "[SPECS]"]
       : [code(v.colourId), code(v.finishId), size || "[SIZE]"].filter((c) => c != null)),
   ]);
   const duplicate = !missing.length && existing.has(sku);
@@ -112,7 +112,7 @@ export function NewItemDialog({
       unitId: v.unitId!,
       description: v.description,
       sellerSku: v.sellerSku,
-      firstPrice: cents === null ? null : { date: v.date, cents },
+      firstPrice: amount === null ? null : { date: v.date, amount },
     }),
   );
   const ready = !missing.length && !duplicate && !badPrice && !busy;

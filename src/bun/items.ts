@@ -68,18 +68,23 @@ export function addEntry(list: ListName, name: string, code: string): ListEntry 
 
 type Row = typeof items.$inferSelect;
 
-// ponytail: loads every entry and price to assemble items in JS; fine for a workshop catalogue,
-// switch to SQL joins if it reaches tens of thousands of rows.
-function assemble(rows: Row[]): Item[] {
-  const d = ready();
-  const entries = new Map(listAllEntries().map((e) => [e.id, e]));
+// Current price per item id: latest date, then latest entered.
+export function currentPrices() {
   const current = new Map<number, Price>();
-  for (const p of d
+  for (const p of ready()
     .select()
     .from(itemPrices)
     .orderBy(asc(itemPrices.date), asc(itemPrices.id))
     .all())
-    current.set(p.itemId, { id: p.id, date: p.date, cents: p.cents }); // last one wins
+    current.set(p.itemId, { id: p.id, date: p.date, amount: p.amount }); // last one wins
+  return current;
+}
+
+// ponytail: loads every entry and price to assemble items in JS; fine for a workshop catalogue,
+// switch to SQL joins if it reaches tens of thousands of rows.
+export function assemble(rows: Row[]): Item[] {
+  const entries = new Map(listAllEntries().map((e) => [e.id, e]));
+  const current = currentPrices();
   const e = (id: number | null) => (id == null ? null : entries.get(id)!);
   return rows.map((r) => ({
     id: r.id,
@@ -141,7 +146,7 @@ export function getItem(id: number): { item: Item; prices: Price[]; history: Ite
   const d = ready();
   const [item] = assemble([itemRow(id)]);
   const prices = d
-    .select({ id: itemPrices.id, date: itemPrices.date, cents: itemPrices.cents })
+    .select({ id: itemPrices.id, date: itemPrices.date, amount: itemPrices.amount })
     .from(itemPrices)
     .where(eq(itemPrices.itemId, id))
     .orderBy(desc(itemPrices.date), desc(itemPrices.id))
@@ -155,10 +160,17 @@ export function getItem(id: number): { item: Item; prices: Price[]; history: Ite
   return { item, prices, history };
 }
 
-function checkPrice(date: string, cents: number) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date)))
+// Also checks operation rates.
+export function checkPrice(date: string, amount: number) {
+  // round trip: Date.parse accepts 2026-02-31
+  const t = Date.parse(date);
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+    Number.isNaN(t) ||
+    new Date(t).toISOString().slice(0, 10) !== date
+  )
     throw new Error("Pick a date.");
-  if (!Number.isInteger(cents) || cents < 0) throw new Error("Enter a price.");
+  if (!Number.isInteger(amount) || amount < 0) throw new Error("Enter a price.");
 }
 
 // The SKU is built here from the stored codes, never taken from the UI.
@@ -184,7 +196,7 @@ export function createItem(v: NewItem): Item {
   const specs = isPart ? v.specs.map(toCode).filter(Boolean) : [];
   if (!isPart && !size) throw new Error("Enter a thickness or weight.");
   if (isPart && !specs.length) throw new Error("Enter at least one specification.");
-  if (v.firstPrice) checkPrice(v.firstPrice.date, v.firstPrice.cents);
+  if (v.firstPrice) checkPrice(v.firstPrice.date, v.firstPrice.amount);
 
   const sku = itemSku(
     v.kind,
@@ -252,15 +264,15 @@ export function updateItem(
 
 // ---------- prices ----------
 
-export function addPrice(itemId: number, date: string, cents: number) {
-  checkPrice(date, cents);
+export function addPrice(itemId: number, date: string, amount: number) {
+  checkPrice(date, amount);
   itemRow(itemId);
-  ready().insert(itemPrices).values({ itemId, date, cents }).run();
+  ready().insert(itemPrices).values({ itemId, date, amount }).run();
 }
 
-export function updatePrice(id: number, date: string, cents: number) {
-  checkPrice(date, cents);
-  ready().update(itemPrices).set({ date, cents }).where(eq(itemPrices.id, id)).run();
+export function updatePrice(id: number, date: string, amount: number) {
+  checkPrice(date, amount);
+  ready().update(itemPrices).set({ date, amount }).where(eq(itemPrices.id, id)).run();
 }
 
 export const deletePrice = (id: number) => {

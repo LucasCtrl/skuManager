@@ -2,10 +2,9 @@ import { BrowserView, BrowserWindow, Updater, Utils } from "electrobun/main";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { AppRPC, Settings } from "../shared/rpc";
-import { APP_VERSION } from "../shared/version";
 import * as store from "./store";
 import * as files from "./files";
-import * as items from "./items";
+import { handlers } from "./handlers";
 
 // ---------- settings (per-user, outside the data folder) ----------
 
@@ -53,6 +52,7 @@ const rpc = BrowserView.defineRPC<AppRPC>({
   maxRequestTime: 120_000,
   handlers: {
     requests: {
+      ...handlers,
       getSettings: () => settings,
       setSettings: (patch) => {
         settings = { ...settings, ...patch };
@@ -69,7 +69,6 @@ const rpc = BrowserView.defineRPC<AppRPC>({
         });
         return dir || null;
       },
-      inspectFolder: ({ path }) => store.inspectFolder(path),
       openDataFolder: ({ path }) => {
         const state = store.openFolder(path);
         if (state.kind !== "error") {
@@ -82,49 +81,14 @@ const rpc = BrowserView.defineRPC<AppRPC>({
         const dir = store.dataFolder();
         if (dir) Utils.openPath(dir);
       },
-      getDbState: () => store.getState(),
-      migrate: () => store.migrate(),
-      backupDb: () => store.backup(),
-      getInfo: () => ({
-        app: APP_VERSION,
-        db: store.dbVersion(),
-        dataFolder: store.dataFolder(),
-        lastBackup: store.lastBackup(),
-      }),
       quit: () => {
         Utils.quit();
       },
-
-      nextSku: () => store.skuOf(store.nextId()),
-      listProducts: ({ query, status }) => store.listProducts(query, status),
-      getProduct: ({ id }) => store.getProduct(id),
-      createProduct: ({ name, description }) => store.createProduct(name, description),
-      updateProduct: ({ id, name, description, status }) =>
-        store.updateProduct(id, name, description, status),
-
-      getCurrency: () => items.getCurrency(),
-      setCurrency: ({ currency }) => items.setCurrency(currency),
-      listEntries: () => items.listAllEntries(),
-      addEntry: ({ list, name, code }) => items.addEntry(list, name, code),
-      listItems: ({ kind, query }) => items.listItems(kind, query),
-      getItem: ({ id }) => items.getItem(id),
-      createItem: (v) => items.createItem(v),
-      updateItem: ({ id, description, sellerSku, status }) =>
-        items.updateItem(id, description, sellerSku, status),
-      addPrice: ({ itemId, date, cents }) => items.addPrice(itemId, date, cents),
-      updatePrice: ({ id, date, cents }) => items.updatePrice(id, date, cents),
-      deletePrice: ({ id }) => items.deletePrice(id),
-
-      listDir: ({ sku, path }) => files.listDir(sku, path),
-      mkdir: ({ sku, path, name }) => files.mkdir(sku, path, name),
-      rename: ({ sku, path, newName }) => files.rename(sku, path, newName),
       trash: ({ sku, paths }) => {
         const abs = paths.map((p) => files.resolveIn(sku, p));
         if (abs.includes(files.productRoot(sku))) throw new Error("Cannot delete the SKU folder");
         for (const p of abs) Utils.moveToTrash(p);
       },
-      copy: ({ sku, paths, dest }) => files.copy(sku, paths, dest),
-      move: ({ sku, paths, dest }) => files.move(sku, paths, dest),
       openPath: ({ sku, path }) => {
         Utils.openPath(files.resolveIn(sku, path));
       },

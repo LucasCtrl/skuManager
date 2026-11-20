@@ -1,28 +1,31 @@
 import { useEffect, useState } from "react";
-import { type Lang, type Product, type Status, STATUSES } from "../../../shared/rpc";
+import { type Cost, type Lang, type Product, type Status, STATUSES } from "../../../shared/rpc";
 import { FilterChips } from "../../components/FilterChips";
 import { Icon } from "../../components/Icon";
 import { SearchField } from "../../components/SearchField";
-import { StatusBadge } from "../../components/status";
+import { StatusBadge, ToReviewBadge } from "../../components/status";
 import { btnPrimary, card } from "../../components/styles";
 import { errMsg, ErrorText } from "../../components/text";
 import { fmtRelative, useT } from "../../i18n";
 import { api } from "../../rpc";
+import { useCurrency } from "../items/utils";
+import { CostText } from "../parts/Cost";
 import { NewProductDialog } from "./ProductDialogs";
 
-export const listCols = "grid grid-cols-[150px_minmax(0,1fr)_150px_110px] gap-4";
+export const listCols = "grid grid-cols-[150px_minmax(0,1fr)_150px_150px_110px] gap-4";
 
 export function ProductList({ lang, onOpen }: { lang: Lang; onOpen: (id: number) => void }) {
   const t = useT();
+  const currency = useCurrency();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Status | null>(null);
   const [total, setTotal] = useState(0);
-  const [matched, setMatched] = useState<Product[]>([]);
+  const [matched, setMatched] = useState<(Product & { toReview: boolean; cost: Cost })[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
-    api.listProducts({ query: "", status: null }).then(
+    api.listProducts({ query: "" }).then(
       (r) => setTotal(r.length),
       () => {},
     );
@@ -31,7 +34,7 @@ export function ProductList({ lang, onOpen }: { lang: Lang; onOpen: (id: number)
   // Search runs in the backend; the status filter and chip counts are computed here.
   useEffect(() => {
     let stale = false; // ignore out-of-order responses while typing
-    api.listProducts({ query, status: null }).then(
+    api.listProducts({ query }).then(
       (r) => !stale && (setMatched(r), setError(null)),
       (e) => !stale && setError(errMsg(e)),
     );
@@ -88,13 +91,14 @@ export function ProductList({ lang, onOpen }: { lang: Lang; onOpen: (id: number)
       <ErrorText error={error} />
 
       <div className={`${card} overflow-x-auto`}>
-        <div className="min-w-[720px]">
+        <div className="min-w-[860px]">
           <div
             className={`${listCols} border-b border-line bg-subtle px-5 py-3 text-xs font-medium uppercase tracking-[0.06em] text-muted`}
           >
             <span>{t("list.colSku")}</span>
             <span>{t("list.colProduct")}</span>
             <span>{t("list.colStatus")}</span>
+            <span className="text-right">{t("cost.label")}</span>
             <span className="text-right">{t("list.colUpdated")}</span>
           </div>
           {rows.map((p, i) => (
@@ -111,8 +115,12 @@ export function ProductList({ lang, onOpen }: { lang: Lang; onOpen: (id: number)
                 <span className="text-[15px] font-medium">{p.name}</span>
                 <span className="truncate text-[13px] text-muted">{p.description}</span>
               </span>
-              <span>
+              <span className="flex flex-wrap gap-1.5">
                 <StatusBadge status={p.status} />
+                {p.toReview && <ToReviewBadge />}
+              </span>
+              <span className="text-right text-sm tabular-nums">
+                <CostText cost={p.cost} currency={currency} />
               </span>
               <span className="text-right text-[13px] text-muted first-letter:uppercase">
                 {fmtRelative(p.updatedAt, lang)}

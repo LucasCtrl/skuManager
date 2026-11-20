@@ -28,6 +28,16 @@ export function StatusBadge({ status }: { status: Status }) {
   );
 }
 
+// A composition line (or the product or part holding it) needs review: another version became Active.
+export function ToReviewBadge() {
+  const t = useT();
+  return (
+    <span className="inline-flex items-center whitespace-nowrap rounded-full bg-warn-soft px-2.5 py-1 text-xs font-medium text-warn">
+      {t("review.badge")}
+    </span>
+  );
+}
+
 // Collapsible list of status changes, newest first.
 export function StatusHistory({
   history,

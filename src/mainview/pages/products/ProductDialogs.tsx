@@ -12,12 +12,16 @@ export function NameAndDescription({
   name,
   description,
   rows,
+  placeholder,
+  autoFocus = true,
   onName,
   onDescription,
 }: {
   name: string;
   description: string;
   rows: number;
+  placeholder?: string;
+  autoFocus?: boolean;
   onName: (v: string) => void;
   onDescription: (v: string) => void;
 }) {
@@ -34,7 +38,7 @@ export function NameAndDescription({
       >
         <input
           id="pd-name"
-          autoFocus
+          autoFocus={autoFocus}
           required
           className={`${field} h-11`}
           value={name}
@@ -53,7 +57,7 @@ export function NameAndDescription({
         <textarea
           id="pd-desc"
           rows={rows}
-          placeholder={t("product.descriptionPlaceholder")}
+          placeholder={placeholder ?? t("product.descriptionPlaceholder")}
           className={`${field} resize-y py-2.5 leading-normal`}
           value={description}
           onChange={(e) => onDescription(e.target.value)}

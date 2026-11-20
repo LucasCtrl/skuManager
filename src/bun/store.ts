@@ -1,20 +1,26 @@
 // Data folder + database. No Electrobun imports here so it runs under `bun test`.
 import { Database } from "bun:sqlite";
 import { drizzle, type BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
-import { and, asc, desc, eq, like, or, sql } from "drizzle-orm";
-import { existsSync, mkdirSync, readdirSync, statSync } from "node:fs";
+import { asc, desc, eq, getTableColumns, sql } from "drizzle-orm";
+import { existsSync, mkdirSync, readdirSync, renameSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { APP_VERSION } from "../shared/version";
-import type { DbState, FolderInfo, Product, Status, StatusChange } from "../shared/rpc";
+import type {
+  Cost,
+  DbState,
+  FolderInfo,
+  Product,
+  Status,
+  StatusChange,
+  Variant,
+} from "../shared/rpc";
 import { STATUSES } from "../shared/rpc";
-import { products, statusHistory } from "./db/schema";
+import { products, productVariants, statusHistory } from "./db/schema";
 import { migrations } from "./db/migrations";
 import { compareVersions } from "./db/version";
-import { DIRS } from "../shared/sku";
-
-export const PRODUCTS_DIR = DIRS.product;
-export const SKU_RE = /^EK-PRD_(\d{5})$/;
-export const skuOf = (id: number) => `EK-PRD_${String(id).padStart(5, "0")}`;
+import { DIRS, PRODUCT_RE, productSku } from "../shared/sku";
+import { calculator, markOutdatedLines, productCost } from "./composition";
+import { listVariants } from "./variants";
 
 let sqlite: Database | null = null;
 let db: BunSQLiteDatabase | null = null;
@@ -24,7 +30,7 @@ let state: DbState = { kind: "noFolder" };
 export const getState = () => state;
 export const productsDir = () => {
   if (!folder) throw new Error("No data folder selected");
-  return join(folder, PRODUCTS_DIR);
+  return join(folder, DIRS.product);
 };
 
 export function ready() {
@@ -75,7 +81,6 @@ export function close() {
 export function openFolder(dir: string): DbState {
   close();
   try {
-    for (const d of Object.values(DIRS)) mkdirSync(join(dir, d), { recursive: true });
     sqlite = new Database(join(dir, "db.sqlite"), { create: true });
     sqlite.exec("PRAGMA foreign_keys = ON");
     folder = dir;
@@ -90,6 +95,8 @@ export function openFolder(dir: string): DbState {
 
     const v = dbVersion();
     if (!v) throw new Error("db.sqlite has no version");
+    // after the checks, so a folder holding someone else's db.sqlite is left untouched
+    for (const d of Object.values(DIRS)) mkdirSync(join(dir, d), { recursive: true });
     const cmp = compareVersions(v, APP_VERSION);
     state =
       cmp === 0
@@ -97,12 +104,33 @@ export function openFolder(dir: string): DbState {
         : cmp > 0
           ? { kind: "appOutdated", dbVersion: v, appVersion: APP_VERSION }
           : { kind: "needsMigration", dbVersion: v, appVersion: APP_VERSION };
+    if (state.kind === "ready") upgradeSkus();
   } catch (e) {
     sqlite?.close();
     sqlite = db = null;
     state = { kind: "error", message: (e as Error).message };
   }
   return state;
+}
+
+// Old SKU formats (EK-PRD_00001, EK-OPE-00001) → current (EK-PRD-00001, EK-OP-00001), in the db and the folders.
+// Not a versioned migration: it runs on every open, so dev dbs already at 0.2.0 are fixed too and a folder
+// rename that failed (folder locked) is retried. A folder whose new name is taken is left as is, never overwritten.
+const newSku = (s: string) => s.replaceAll("_", "-").replace(/^EK-OPE-/, "EK-OP-");
+function upgradeSkus() {
+  const s = sqlite!;
+  s.transaction(() => {
+    for (const t of ["products", "items", "part_versions", "operations"])
+      s.run(`UPDATE ${t} SET sku = replace(replace(sku, '_', '-'), 'EK-OPE-', 'EK-OP-')`);
+  })();
+  for (const d of Object.values(DIRS))
+    for (const f of readdirSync(join(folder!, d))) {
+      const to = join(folder!, d, newSku(f));
+      if (f.startsWith("EK-") && newSku(f) !== f && !existsSync(to))
+        try {
+          renameSync(join(folder!, d, f), to);
+        } catch {} // locked (file open on Windows): retried on next open
+    }
 }
 
 const BACKUP_RE = /^db\.backup-.*\.sqlite$/;
@@ -131,6 +159,7 @@ export function migrate(): { state: DbState; backup: string } {
   const name = backup();
   runMigrations(state.dbVersion);
   state = { kind: "ready" };
+  upgradeSkus();
   return { state, backup: name };
 }
 
@@ -156,24 +185,47 @@ export function inspectFolder(dir: string): FolderInfo {
 
 // ---------- products ----------
 
-export function listProducts(query: string, status: Status | null): Product[] {
-  const q = `%${query.trim()}%`;
-  return ready()
-    .select()
+// Searches the SKU, name and description, and the code and name of the product's variants.
+export function listProducts(query: string): (Product & { toReview: boolean; cost: Cost })[] {
+  const q = query.trim(); // plain substring, like the other lists (LIKE would treat _ and % as wildcards)
+  const calc = calculator();
+  const variants = ready().select().from(productVariants).all();
+  const rows = ready()
+    .select({
+      ...getTableColumns(products),
+      // qualified by hand: drizzle leaves columns unqualified, and "id" would bind to composition_lines
+      toReview:
+        sql<boolean>`exists (select 1 from composition_lines l where l.to_review and (l.product_id = products.id
+          or l.variant_id in (select v.id from product_variants v where v.product_id = products.id)))`.mapWith(
+          Boolean,
+        ),
+    })
     .from(products)
     .where(
-      and(
-        query.trim()
-          ? or(like(products.sku, q), like(products.name, q), like(products.description, q))
-          : undefined,
-        status ? eq(products.status, status) : undefined,
-      ),
+      q
+        ? sql`instr(lower(${products.sku} || ' ' || ${products.name} || ' ' || ${products.description}
+            || coalesce((select group_concat(v.code || ' ' || v.name, ' ') from product_variants v
+                where v.product_id = products.id), '')), lower(${q})) > 0`
+        : undefined,
     )
     .orderBy(desc(products.id))
     .all();
+  return rows.map((p) => ({
+    ...p,
+    cost: productCost(
+      calc,
+      p.id,
+      variants.filter((v) => v.productId === p.id).map((v) => v.id),
+    ),
+  }));
 }
 
-export function getProduct(id: number): { product: Product; history: StatusChange[] } {
+export function getProduct(id: number): {
+  product: Product;
+  history: StatusChange[];
+  variants: Variant[];
+  cost: Cost;
+} {
   const d = ready();
   const product = d.select().from(products).where(eq(products.id, id)).get();
   if (!product) throw new Error(`Product ${id} not found`);
@@ -183,29 +235,47 @@ export function getProduct(id: number): { product: Product; history: StatusChang
     .where(eq(statusHistory.productId, id))
     .orderBy(asc(statusHistory.id))
     .all();
-  return { product, history };
+  const calc = calculator();
+  const variants = listVariants(id, calc);
+  return {
+    product,
+    history,
+    variants,
+    cost: productCost(
+      calc,
+      id,
+      variants.map((v) => v.id),
+    ),
+  };
 }
 
-function cleanName(name: string) {
+export function cleanName(name: string) {
   const n = name.trim();
   if (!n) throw new Error("Name is required");
   return n;
 }
 
-// Next number is above both the db and any existing EK-PRD_xxxxx folder, so a SKU is never reassigned.
-export function nextId(): number {
-  const maxDb = ready()
-    .select({ m: sql<number>`coalesce(max(${products.id}), 0)` })
-    .from(products)
-    .get()!.m;
+// Next 5-digit number above both the db and any SKU folder matching `re`, so a SKU is never reassigned.
+export function nextFreeId(maxDb: number, dir: string, re: RegExp, last: string): number {
   const maxDir = Math.max(
     0,
-    ...readdirSync(productsDir()).map((f) => Number(SKU_RE.exec(f)?.[1] ?? 0)),
+    ...readdirSync(join(folder!, dir)).map((f) => Number(re.exec(f)?.[1] ?? 0)),
   );
   const id = Math.max(maxDb, maxDir) + 1;
-  if (id > 99999) throw new Error("No SKU numbers left (EK-PRD_99999 reached)");
+  if (id > 99999) throw new Error(`No SKU numbers left (${last} reached)`);
   return id;
 }
+
+export const nextId = () =>
+  nextFreeId(
+    ready()
+      .select({ m: sql<number>`coalesce(max(${products.id}), 0)` })
+      .from(products)
+      .get()!.m,
+    DIRS.product,
+    PRODUCT_RE,
+    "EK-PRD-99999",
+  );
 
 export function createProduct(name: string, description: string): Product {
   const d = ready();
@@ -215,7 +285,7 @@ export function createProduct(name: string, description: string): Product {
     const t = now();
     const p: Product = {
       id,
-      sku: skuOf(id),
+      sku: productSku(id),
       name: n,
       description: description.trim(),
       status: "In development",
@@ -244,6 +314,7 @@ export function updateProduct(
     const t = now();
     if (old.status !== status)
       tx.insert(statusHistory).values({ productId: id, status, changedAt: t }).run();
+    if (old.status === "Retired" && status !== "Retired") markOutdatedLines(id);
     return tx
       .update(products)
       .set({ name: n, description: description.trim(), status, updatedAt: t })

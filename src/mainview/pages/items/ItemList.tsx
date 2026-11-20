@@ -6,10 +6,10 @@ import { SearchField } from "../../components/SearchField";
 import { StatusBadge } from "../../components/status";
 import { btnPrimary, card } from "../../components/styles";
 import { errMsg, ErrorText } from "../../components/text";
-import { fmtMoney, useT } from "../../i18n";
+import { fmtMoney, useT, uiLang } from "../../i18n";
 import { api } from "../../rpc";
 import { NewItemDialog } from "./NewItemDialog";
-import { uiLang, useCurrency } from "./utils";
+import { useCurrency } from "./utils";
 
 export const listCols = "grid grid-cols-[320px_120px_minmax(0,1fr)_150px_100px] gap-4";
 
@@ -116,7 +116,7 @@ export function ItemList({ kind, onOpen }: { kind: ItemKind; onOpen: (id: number
                 <span className="truncate text-[13px] text-muted">{i.seller.name}</span>
               </span>
               <span className="text-right text-sm tabular-nums">
-                {i.price ? fmtMoney(i.price.cents, currency, uiLang()) : "—"}
+                {i.price ? fmtMoney(i.price.amount / 1e4, currency, uiLang(), 4) : "—"}
                 {i.price && <span className="text-[13px] text-muted"> / {i.unit.code}</span>}
               </span>
               <span>

@@ -37,8 +37,15 @@ function entry(sku: string, abs: string): FileEntry {
 // Names valid on Windows, macOS and Linux.
 export function checkName(name: string) {
   const n = name.trim();
-  // oxlint-disable-next-line no-control-regex
-  if (!n || n === "." || n === ".." || /[<>:"/\\|?*\x00-\x1f]/.test(n) || /[. ]$/.test(n))
+  if (
+    !n ||
+    n === "." ||
+    n === ".." ||
+    // oxlint-disable-next-line no-control-regex
+    /[<>:"/\\|?*\x00-\x1f]/.test(n) ||
+    /[. ]$/.test(n) ||
+    /^(con|prn|aux|nul|com\d|lpt\d)(\..*)?$/i.test(n) // reserved on Windows, with any extension
+  )
     throw new Error(`Invalid name: "${name}"`);
   return n;
 }
@@ -73,7 +80,8 @@ export function rename(sku: string, rel: string, newName: string): FileEntry {
   const src = resolveIn(sku, rel);
   if (src === productRoot(sku)) throw new Error("Cannot rename the product folder");
   const dst = join(dirname(src), checkName(newName));
-  if (dst !== src && existsSync(dst) && dst.toLowerCase() !== src.toLowerCase())
+  // same inode = same file (case-only rename on Windows/macOS); on Linux a case variant is another file
+  if (dst !== src && existsSync(dst) && statSync(dst).ino !== statSync(src).ino)
     throw new Error(`"${newName}" already exists`);
   renameSync(src, dst);
   return entry(sku, dst);

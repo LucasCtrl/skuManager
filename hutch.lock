@@ -21,6 +21,7 @@
         "drizzle-kit": "^0.31.11",
         "oxfmt": "^0.72.0",
         "oxlint": "^1.87.0",
+        "playwright-core": "1.62.0",
         "postcss": "^8.4.49",
         "tailwindcss": "^3.4.16",
         "typescript": "^5.7.2",
@@ -506,6 +507,8 @@
     "picomatch": ["picomatch@4.0.7", "https://registry.npmjs.org/picomatch/-/picomatch-4.0.7.tgz", {}, "sha512-qcJu88Q2IWqJsDD529JKMdwGm/dvInW4HvQnRwiH9JtihJvzGOscDtHE3x1pBKeUOTysQ8kVmLnJ2kJu7yhcGA=="],
 
     "pirates": ["pirates@4.0.7", "https://registry.npmjs.org/pirates/-/pirates-4.0.7.tgz", {}, "sha512-TfySrs/5nm8fQJDcBDuUng3VOUKsd7S+zqvbOTiGXHfxX4wK31ard+hoNuvkicM/2YFzlpDgABOevKSsB4G/FA=="],
+
+    "playwright-core": ["playwright-core@1.62.0", "https://registry.npmjs.org/playwright-core/-/playwright-core-1.62.0.tgz", {"bin": {"playwright-core": "cli.js"}}, "sha512-nsNRyq0r2zsG8AcRHWknc9QRA5XCueC7gWMrs+Gx2tlZn9hcl8zudfh00lhJPY1DE7NmZ6bDsT9g2yey8mXljA=="],
 
     "postcss": ["postcss@8.5.29", "https://registry.npmjs.org/postcss/-/postcss-8.5.29.tgz", {"dependencies": {"nanoid": "^3.3.19", "picocolors": "^1.1.1", "source-map-js": "^1.2.2"}}, "sha512-49cGhUbXj8Qenv0iTMxA1cFBzxXoctpC9Ujd77t1WcbJIr6nF/eI7g/8MgxrYldFRuAXvja7xQRwavoW7kgrxQ=="],
 

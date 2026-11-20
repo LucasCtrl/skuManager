@@ -2,9 +2,9 @@
 
 Desktop app to create SKUs for products, raw materials and purchased parts, and keep each SKU's files in its own folder.
 
-- Every product gets a unique, never-reused SKU: `EK-PRD_00001`, `EK-PRD_00002`, …
+- Every product gets a unique, never-reused SKU: `EK-PRD-00001`, `EK-PRD-00002`, …
 - Products have a name, description and status (**In development**, **Active**, **Retired**, **Research**), with a status history.
-- Raw materials (`EK-MAT_ESUN_PLA_BLK_OPQ_1KG`) and purchased parts (`EK-PRT_BOSSARD_SCREW_M3X50`) get a SKU built from their seller, type and specifications. Each has a description, seller SKU, status (**Active**, **Retired**) and a dated price history.
+- Raw materials (`EK-MAT-ESUN-PLA-BLK-OPQ-1KG`) and purchased parts (`EK-PRT-BOSSARD-SCREW-M3X50`) get a SKU built from their seller, type and specifications. Each has a description, seller SKU, status (**Active**, **Retired**) and a dated price history.
 - Sellers, material types, part types, colours, finishes and price units are lists managed in the settings. The currency symbol is a setting too.
 - Each SKU has a folder you can manage from inside the app: drag files in from your system file explorer, create folders, rename, duplicate, cut/copy/paste, move to trash, open with the default app.
 - English and French, light and dark themes.
@@ -34,12 +34,12 @@ On first launch, choose a data folder. Pick an empty folder to start fresh, or a
 ```
 <data folder>/
 ├── 1_PRODUCTS/
-│   ├── EK-PRD_00001/   ← one folder per SKU, your files go here
-│   └── EK-PRD_00002/
+│   ├── EK-PRD-00001/   ← one folder per SKU, your files go here
+│   └── EK-PRD-00002/
 ├── 3_MATERIALS/
-│   └── EK-MAT_ESUN_PLA_BLK_OPQ_1KG/
+│   └── EK-MAT-ESUN-PLA-BLK-OPQ-1KG/
 ├── 4_PARTS/
-│   └── EK-PRT_BOSSARD_SCREW_M3X50/
+│   └── EK-PRT-BOSSARD-SCREW-M3X50/
 ├── db.sqlite           ← products, materials, parts, prices, lists, database version
 └── db.backup-v0.0.1-2026-10-08.sqlite   ← backups (Settings → Back up now)
 ```

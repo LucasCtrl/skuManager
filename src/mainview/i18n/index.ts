@@ -18,8 +18,11 @@ export type T = ReturnType<typeof makeT>;
 export const TContext = createContext<T>(makeT("en"));
 export const useT = () => useContext(TContext);
 
+// Current UI language, for formatters outside React props.
+export const uiLang = (): Lang => (document.documentElement.lang === "fr" ? "fr" : "en");
+
+export const locale = (lang: Lang) => (lang === "fr" ? "fr-FR" : "en-GB");
 // Day-first formats, as in the design ("14 Sep 2026").
-const locale = (lang: Lang) => (lang === "fr" ? "fr-FR" : "en-GB");
 export const fmtDay = (d: string | number, lang: Lang) =>
   new Date(d).toLocaleDateString(locale(lang), { day: "numeric", month: "short", year: "numeric" });
 export const fmtDateTime = (d: string | number, lang: Lang) =>
@@ -48,9 +51,10 @@ export function fmtRelative(d: string | number, lang: Lang) {
 }
 
 // "€18.40" / "€18,40": the currency is only a symbol, shown before the amount.
-export const fmtMoney = (cents: number, currency: string, lang: Lang) =>
+// `value` is in currency units; prices show up to 4 decimals, costs 2.
+export const fmtMoney = (value: number, currency: string, lang: Lang, decimals = 2) =>
   currency +
-  (cents / 100).toLocaleString(locale(lang), {
+  value.toLocaleString(locale(lang), {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    maximumFractionDigits: decimals,
   });

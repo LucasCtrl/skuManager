@@ -1,5 +1,12 @@
 import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
-import type { ItemKind, ItemStatus, ListName, Status } from "../../shared/rpc";
+import type {
+  ItemKind,
+  ItemStatus,
+  ListName,
+  PartStatus,
+  RateKind,
+  Status,
+} from "../../shared/rpc";
 
 export const meta = sqliteTable("meta", {
   key: text("key").primaryKey(),
@@ -57,7 +64,7 @@ export const itemPrices = sqliteTable("item_prices", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   itemId: integer("item_id").notNull(),
   date: text("date").notNull(),
-  cents: integer("cents").notNull(),
+  amount: integer("amount").notNull(), // ten-thousandths of the currency
 });
 
 export const itemStatusHistory = sqliteTable("item_status_history", {
@@ -65,4 +72,87 @@ export const itemStatusHistory = sqliteTable("item_status_history", {
   itemId: integer("item_id").notNull(),
   status: text("status").$type<ItemStatus>().notNull(),
   changedAt: text("changed_at").notNull(),
+});
+
+// ---------- operations ----------
+
+export const operations = sqliteTable("operations", {
+  id: integer("id").primaryKey(), // the 5-digit SKU number
+  sku: text("sku").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description").notNull().default(""),
+  rateKind: text("rate_kind").$type<RateKind>().notNull(),
+  unitId: integer("unit_id"), // per quantity only
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const operationRates = sqliteTable("operation_rates", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  operationId: integer("operation_id").notNull(),
+  date: text("date").notNull(),
+  amount: integer("amount").notNull(), // ten-thousandths of the currency
+});
+
+// ---------- manufactured parts and compositions ----------
+
+export const manufacturedParts = sqliteTable("manufactured_parts", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  productId: integer("product_id").notNull(), // origin product
+  name: text("name").notNull(),
+  code: text("code").notNull(), // [partName], unique per product ignoring case
+  createdAt: text("created_at").notNull(),
+});
+
+export const partVersions = sqliteTable("part_versions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  partId: integer("part_id").notNull(),
+  version: integer("version").notNull(),
+  sku: text("sku").notNull().unique(),
+  description: text("description").notNull().default(""),
+  status: text("status").$type<PartStatus>().notNull(),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const partStatusHistory = sqliteTable("part_status_history", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  versionId: integer("version_id").notNull(),
+  status: text("status").$type<PartStatus>().notNull(),
+  changedAt: text("changed_at").notNull(),
+});
+
+// ---------- product variants (docs/products.md#variants) ----------
+
+export const productVariants = sqliteTable("product_variants", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  productId: integer("product_id").notNull(),
+  code: text("code").notNull(), // unique per product, case-insensitive
+  sku: text("sku").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description").notNull().default(""),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+// In the variant, every line of from_item uses to_item instead, at any depth.
+export const variantSwaps = sqliteTable("variant_swaps", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  variantId: integer("variant_id").notNull(),
+  fromItemId: integer("from_item_id").notNull(),
+  toItemId: integer("to_item_id").notNull(),
+});
+
+// Owner: product_id, version_id or variant_id. Component: item_id, operation_id or part_version_id.
+export const compositionLines = sqliteTable("composition_lines", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  productId: integer("product_id"),
+  versionId: integer("version_id"),
+  variantId: integer("variant_id"),
+  itemId: integer("item_id"),
+  operationId: integer("operation_id"),
+  partVersionId: integer("part_version_id"),
+  quantity: integer("quantity").notNull(), // see CompositionLine in shared/rpc.ts
+  toReview: integer("to_review", { mode: "boolean" }).notNull().default(false),
+  position: integer("position").notNull().default(0), // order of the lines within their owner
 });

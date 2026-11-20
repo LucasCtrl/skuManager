@@ -4,8 +4,13 @@ import { detectLang, makeT, TContext } from "./i18n";
 import { Header } from "./layouts/Header";
 import { ItemList } from "./pages/items/ItemList";
 import { ItemPage } from "./pages/items/ItemPage";
+import { OperationList } from "./pages/operations/OperationList";
+import { PartList } from "./pages/parts/PartList";
+import { PartPage } from "./pages/parts/PartPage";
+import { OperationPage } from "./pages/operations/OperationPage";
 import { ProductList } from "./pages/products/ProductList";
 import { ProductPage } from "./pages/products/ProductPage";
+import { VariantPage } from "./pages/products/VariantPage";
 import { SettingsPage } from "./pages/settings/SettingsPage";
 import { AppOutdated } from "./pages/setup/AppOutdated";
 import { FirstRun } from "./pages/setup/FirstRun";
@@ -15,8 +20,13 @@ import { api } from "./rpc";
 export type Page =
   | { name: "list" }
   | { name: "product"; id: number }
+  | { name: "variant"; id: number }
+  | { name: "parts" }
+  | { name: "version"; id: number }
   | { name: "items"; kind: ItemKind }
   | { name: "item"; kind: ItemKind; id: number }
+  | { name: "operations" }
+  | { name: "operation"; id: number }
   | { name: "settings" };
 
 export function useTheme(theme: Theme) {
@@ -85,7 +95,18 @@ export default function App() {
             {page.name === "list" && (
               <ProductList lang={lang} onOpen={(id) => setPage({ name: "product", id })} />
             )}
-            {page.name === "product" && <ProductPage id={page.id} lang={lang} />}
+            {page.name === "product" && (
+              <ProductPage key={page.id} id={page.id} lang={lang} onNavigate={setPage} />
+            )}
+            {page.name === "variant" && (
+              <VariantPage key={page.id} id={page.id} lang={lang} onNavigate={setPage} />
+            )}
+            {page.name === "parts" && (
+              <PartList onOpen={(id) => setPage({ name: "version", id })} />
+            )}
+            {page.name === "version" && (
+              <PartPage key={page.id} id={page.id} lang={lang} onNavigate={setPage} />
+            )}
             {page.name === "items" && (
               <ItemList
                 key={page.kind}
@@ -93,7 +114,15 @@ export default function App() {
                 onOpen={(id) => setPage({ name: "item", kind: page.kind, id })}
               />
             )}
-            {page.name === "item" && <ItemPage key={page.id} id={page.id} lang={lang} />}
+            {page.name === "item" && (
+              <ItemPage key={page.id} id={page.id} lang={lang} onNavigate={setPage} />
+            )}
+            {page.name === "operations" && (
+              <OperationList onOpen={(id) => setPage({ name: "operation", id })} />
+            )}
+            {page.name === "operation" && (
+              <OperationPage key={page.id} id={page.id} lang={lang} onNavigate={setPage} />
+            )}
             {page.name === "settings" && (
               <SettingsPage
                 lang={lang}

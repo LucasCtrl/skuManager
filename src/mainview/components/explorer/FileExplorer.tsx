@@ -2,16 +2,16 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import type { DragEvent, KeyboardEvent, MouseEvent } from "react";
 import type { FileEntry } from "../../../shared/rpc";
 import { skuFolder } from "../../../shared/sku";
-import { fmtRelative, type T } from "../../i18n";
+import { fmtRelative, type T, uiLang } from "../../i18n";
 import { api } from "../../rpc";
 import { Icon } from "../Icon";
+import { errMsg } from "../text";
 import { card, toolBtn } from "../styles";
 
 const DND = "application/x-sku-paths";
 const join = (dir: string, name: string) => (dir ? `${dir}/${name}` : name);
 const parentOf = (p: string) => p.slice(0, Math.max(0, p.lastIndexOf("/")));
 const inside = (p: string, dest: string) => dest === p || dest.startsWith(p + "/");
-const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 const MOD = navigator.platform.startsWith("Mac") ? "⌘" : "Ctrl+";
 const byDirThenName = (a: FileEntry, b: FileEntry) =>
   Number(b.isDir) - Number(a.isDir) ||
@@ -94,6 +94,7 @@ export function FileExplorer({ sku, t }: { sku: string; t: T }) {
   const go = (p: string) => {
     setPath(p);
     setSelected(new Set());
+    setAnchor(0); // row numbers of the previous folder mean nothing here
     setRenaming(null);
     setCreating(false);
   };
@@ -105,7 +106,7 @@ export function FileExplorer({ sku, t }: { sku: string; t: T }) {
         setEntries([...list].sort(byDirThenName));
         setSelected((s) => new Set(list.filter((e) => s.has(e.path)).map((e) => e.path)));
       },
-      (e) => live && setError(msg(e)),
+      (e) => live && setError(errMsg(e)),
     );
     return () => {
       live = false;
@@ -128,7 +129,7 @@ export function FileExplorer({ sku, t }: { sku: string; t: T }) {
     try {
       await fn();
     } catch (e) {
-      setError(msg(e));
+      setError(errMsg(e));
     }
     refresh();
   };
@@ -291,7 +292,7 @@ export function FileExplorer({ sku, t }: { sku: string; t: T }) {
   const crumbs = path ? path.split("/") : [];
   const dropHi = "bg-accent-soft ring-1 ring-inset ring-accent";
   const cols = "grid grid-cols-[28px_minmax(0,1fr)_140px_90px_120px] items-center gap-3 px-4";
-  const lang = document.documentElement.lang === "fr" ? "fr" : "en";
+  const lang = uiLang();
   const check = "h-4 w-4 accent-accent";
   const menuH = menuItems.reduce((h, i) => h + (i ? 36 : 9), 12);
 

@@ -10,6 +10,7 @@ import * as items from "./items";
 import * as operations from "./operations";
 import * as parts from "./parts";
 import * as composition from "./composition";
+import * as variants from "./variants";
 
 // ---------- settings (per-user, outside the data folder) ----------
 
@@ -147,6 +148,20 @@ const rpc = BrowserView.defineRPC<AppRPC>({
       moveLine: ({ id, by }) => composition.moveLine(id, by),
       markReviewed: ({ id }) => composition.markReviewed(id),
       usedBy: ({ component }) => composition.usedBy(component),
+
+      getVariant: ({ id }) => {
+        const variant = variants.getVariant(id);
+        return { variant, product: store.getProduct(variant.productId).product };
+      },
+      variantSku: ({ productId, code }) => variants.variantSku(productId, code).sku,
+      createVariant: ({ productId, code, name, description, copyFromId }) =>
+        variants.createVariant(productId, code, name, description, copyFromId),
+      updateVariant: ({ id, name, description }) => variants.updateVariant(id, name, description),
+      deleteVariant: ({ id }) => variants.deleteVariant(id),
+      listSwaps: ({ variantId }) => variants.listSwaps(variantId),
+      addSwap: ({ variantId, fromId, toId }) => variants.addSwap(variantId, fromId, toId),
+      updateSwap: ({ id, toId }) => variants.updateSwap(id, toId),
+      deleteSwap: ({ id }) => variants.deleteSwap(id),
 
       listDir: ({ sku, path }) => files.listDir(sku, path),
       mkdir: ({ sku, path, name }) => files.mkdir(sku, path, name),

@@ -122,11 +122,33 @@ export const partStatusHistory = sqliteTable("part_status_history", {
   changedAt: text("changed_at").notNull(),
 });
 
-// Owner: product_id or version_id. Component: item_id, operation_id or part_version_id.
+// ---------- product variants (docs/products.md#variants) ----------
+
+export const productVariants = sqliteTable("product_variants", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  productId: integer("product_id").notNull(),
+  code: text("code").notNull(), // unique per product, case-insensitive
+  sku: text("sku").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description").notNull().default(""),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+// In the variant, every line of from_item uses to_item instead, at any depth.
+export const variantSwaps = sqliteTable("variant_swaps", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  variantId: integer("variant_id").notNull(),
+  fromItemId: integer("from_item_id").notNull(),
+  toItemId: integer("to_item_id").notNull(),
+});
+
+// Owner: product_id, version_id or variant_id. Component: item_id, operation_id or part_version_id.
 export const compositionLines = sqliteTable("composition_lines", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   productId: integer("product_id"),
   versionId: integer("version_id"),
+  variantId: integer("variant_id"),
   itemId: integer("item_id"),
   operationId: integer("operation_id"),
   partVersionId: integer("part_version_id"),

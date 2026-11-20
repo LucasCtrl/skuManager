@@ -6,6 +6,7 @@ import {
   type PartVersion,
   type Product,
   type StatusChange,
+  type Variant,
 } from "../../../shared/rpc";
 import { type Page } from "../../App";
 import { Icon } from "../../components/Icon";
@@ -17,17 +18,20 @@ import { fmtDay, fmtRelative, useT } from "../../i18n";
 import { api } from "../../rpc";
 import { useCurrency } from "../items/utils";
 import { Composition, lineTarget } from "../parts/Composition";
-import { CostBox } from "../parts/Cost";
+import { CostBox, CostText } from "../parts/Cost";
 import { NewPartDialog } from "../parts/PartDialogs";
 import { VersionRows } from "../parts/VersionRows";
 import { EditProductDialog } from "./ProductDialogs";
+import { NewVariantDialog } from "./VariantDialogs";
 
 type Data = {
   product: Product;
   history: StatusChange[];
+  variants: Variant[];
+  cost: Cost; // the product's: its composition, or the range of its variants
   parts: PartVersion[];
   lines: CompositionLine[];
-  cost: Cost;
+  compositionCost: Cost;
 };
 
 export function ProductPage({
@@ -43,7 +47,7 @@ export function ProductPage({
   const currency = useCurrency();
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [dialog, setDialog] = useState<null | "edit" | "part">(null);
+  const [dialog, setDialog] = useState<null | "edit" | "part" | "variant">(null);
 
   const load = useCallback(
     () =>
@@ -52,7 +56,7 @@ export function ProductPage({
         api.listPartVersions({ query: "", status: null, productId: id }),
         api.getComposition({ owner: { kind: "product", id } }),
       ]).then(
-        ([p, parts, c]) => setData({ ...p, parts, ...c }),
+        ([p, parts, c]) => setData({ ...p, parts, lines: c.lines, compositionCost: c.cost }),
         (e) => setError(errMsg(e)),
       ),
     [id],
@@ -68,7 +72,8 @@ export function ProductPage({
       </main>
     );
   if (!data) return null;
-  const { product: p, history } = data;
+  const { product: p, history, variants } = data;
+  const locked = p.status === "Retired";
 
   return (
     <main className="mx-auto box-border flex w-full max-w-[1120px] flex-col gap-5 px-6 pb-12 pt-7">
@@ -79,7 +84,9 @@ export function ProductPage({
               {p.sku}
             </span>
             <StatusBadge status={p.status} />
-            {data.lines.some((l) => l.toReview) && <ToReviewBadge />}
+            {(data.lines.some((l) => l.toReview) || variants.some((v) => v.toReview)) && (
+              <ToReviewBadge />
+            )}
           </div>
           <h1 className="m-0 text-[26px] font-semibold tracking-[-0.01em]">{p.name}</h1>
           {p.description && (
@@ -120,16 +127,54 @@ export function ProductPage({
         )}
       </section>
 
-      <Composition
-        owner={{ kind: "product", id }}
-        lines={data.lines}
-        cost={data.cost}
-        currency={currency}
-        lang={lang}
-        locked={p.status === "Retired"}
-        onOpen={(l) => onNavigate(lineTarget(l))}
-        onChange={load}
-      />
+      <section aria-labelledby="variants-title" className={card}>
+        <div className="box-border flex min-h-16 flex-wrap items-center gap-3 border-b border-line py-2.5 pl-5 pr-3">
+          <h2 id="variants-title" className="m-0 text-base font-semibold">
+            {t("variants.title")}
+          </h2>
+          <span className="text-[13px] text-muted">
+            {locked ? t("comp.locked") : t("variants.count", { n: variants.length })}
+          </span>
+          <span className="ml-auto" />
+          {!locked && (
+            <button type="button" className={toolBtn} onClick={() => setDialog("variant")}>
+              <Icon name="plus" size={16} strokeWidth={2} />
+              {t("variants.new")}
+            </button>
+          )}
+        </div>
+        {variants.map((v) => (
+          <button
+            key={v.id}
+            type="button"
+            onClick={() => onNavigate({ name: "variant", id: v.id })}
+            className="flex w-full flex-wrap items-center gap-3 border-b border-divider px-5 py-3 text-left text-ink hover:bg-subtle focus-visible:-outline-offset-2"
+          >
+            <span className="break-all font-mono text-[13px] font-medium">{v.sku}</span>
+            <span className="min-w-0 flex-1 truncate text-sm text-muted">{v.name}</span>
+            {v.toReview && <ToReviewBadge />}
+            <span className="text-sm tabular-nums">
+              <CostText cost={v.cost} currency={currency} />
+            </span>
+          </button>
+        ))}
+        {!variants.length && (
+          <div className="px-5 py-8 text-center text-sm text-muted">{t("variants.none")}</div>
+        )}
+      </section>
+
+      {!variants.length && (
+        <Composition
+          owner={{ kind: "product", id }}
+          lines={data.lines}
+          cost={data.compositionCost}
+          currency={currency}
+          lang={lang}
+          locked={locked}
+          onOpen={(l) => onNavigate(lineTarget(l))}
+          onChange={load}
+        />
+      )}
 
       <FileExplorer key={p.sku} sku={p.sku} t={t} />
 
@@ -143,6 +188,20 @@ export function ProductPage({
             await load();
             setDialog(null);
           }}
+        />
+      )}
+      {dialog === "variant" && (
+        <NewVariantDialog
+          productId={id}
+          variants={variants}
+          copyFrom={null}
+          onCancel={() => setDialog(null)}
+          onCreate={async (v) =>
+            onNavigate({
+              name: "variant",
+              id: (await api.createVariant({ productId: id, ...v })).id,
+            })
+          }
         />
       )}
       {dialog === "part" && (

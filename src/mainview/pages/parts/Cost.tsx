@@ -1,13 +1,15 @@
 import { type Cost } from "../../../shared/rpc";
 import { fmtMoney, uiLang, useT } from "../../i18n";
 
-// "€1.80", "€1.80 partial" when some line has no price or rate, "—" when nothing is known.
+// "€1.80", "€1.80 partial" when some line has no price or rate, "—" when nothing is known,
+// "€1.80 – €4.20" for a product whose variants cost differently.
 export function CostText({ cost, currency }: { cost: Cost; currency: string }) {
   const t = useT();
   if (cost.value == null) return <>—</>;
   return (
     <>
       {fmtMoney(cost.value, currency, uiLang())}
+      {cost.max != null && ` – ${fmtMoney(cost.max, currency, uiLang())}`}
       {cost.partial && (
         <span title={t("cost.partialHelp")} className="ml-1.5 text-xs font-medium text-warn">
           {t("cost.partial")}

@@ -23,7 +23,7 @@ export const lineTarget = ({ component: c, sku }: CompositionLine): Page =>
 const cols =
   "grid grid-cols-[minmax(0,1fr)_minmax(0,auto)_130px_120px_216px] items-center gap-3 px-5";
 
-// Composition of a product or part version. `locked`: a Retired product's composition is read-only.
+// Composition of a product, variant or part version. `locked`: a Retired product's composition is read-only.
 export function Composition({
   owner,
   lines,
@@ -93,6 +93,11 @@ export function Composition({
           >
             <span className="break-all font-mono text-[13px] font-medium">{l.sku}</span>
             <span className="truncate text-[13px] text-muted">{l.name}</span>
+            {l.swap && (
+              <span className="break-all text-[13px] text-muted">
+                {t("swaps.lineUses", { sku: l.swap })}
+              </span>
+            )}
           </button>
           <span className="flex flex-wrap justify-end gap-1.5">
             {l.status && l.status !== "Active" && <StatusBadge status={l.status} />}

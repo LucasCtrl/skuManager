@@ -1,5 +1,5 @@
-// Compositions of products and manufactured part versions: lines, cost, To review, cycles, used-by
-// (docs/manufactured-parts.md#composition, docs/products.md#composition).
+// Compositions of products, product variants and manufactured part versions: lines, cost, swaps,
+// To review, cycles, used-by (docs/manufactured-parts.md#composition, docs/products.md#composition).
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import type { Component, CompositionLine, Cost, Owner, PartStatus, UsedBy } from "../shared/rpc";
 import {
@@ -9,6 +9,8 @@ import {
   operations,
   partVersions,
   products,
+  productVariants,
+  variantSwaps,
 } from "./db/schema";
 import { assemble as assembleItems, currentPrices } from "./items";
 import { currentRates } from "./operations";
@@ -37,44 +39,97 @@ export function calculator() {
       .all()
       .map((o) => o.id),
   );
-  const memo = new Map<number, Cost>();
-
-  // Amounts are ten-thousandths, quantities thousandths (or seconds, or a count): no rounding here.
-  const lineCost = (l: Line): Cost => {
-    if (l.itemId != null) {
-      const p = prices.get(l.itemId);
-      return p ? { value: (l.quantity * p.amount) / 1e7, partial: false } : NONE;
-    }
-    if (l.operationId != null) {
-      const r = rates.get(l.operationId);
-      if (!r) return NONE;
-      const per = perHour.has(l.operationId) ? 3600 * 1e4 : 1e7;
-      return { value: (l.quantity * r.amount) / per, partial: false };
-    }
-    const c = versionCost(l.partVersionId!);
-    return c.value == null ? NONE : { value: l.quantity * c.value, partial: c.partial };
-  };
-
-  const total = (ls: Line[]): Cost => {
-    if (!ls.length) return { value: null, partial: false };
-    const cs = ls.map(lineCost);
-    const known = cs.filter((c) => c.value != null);
-    return {
-      value: known.length ? known.reduce((a, c) => a + c.value!, 0) : null,
-      partial: cs.some((c) => c.partial),
-    };
-  };
-
-  // Recursion ends: cycles are refused when lines are added or changed.
-  const versionCost = (id: number): Cost => {
-    if (!memo.has(id)) memo.set(id, total(lines.filter((l) => l.versionId === id)));
-    return memo.get(id)!;
-  };
+  const swapRows = d.select().from(variantSwaps).all();
 
   const ownerLines = (o: Owner) =>
-    lines.filter((l) => (o.kind === "product" ? l.productId : l.versionId) === o.id);
+    lines.filter(
+      (l) =>
+        (o.kind === "product" ? l.productId : o.kind === "version" ? l.versionId : l.variantId) ===
+        o.id,
+    );
 
-  return { lines, lineCost, total, versionCost, ownerLines };
+  // A variant's swaps (item → item), applied at every depth.
+  const swapsOf = (variantId: number) =>
+    new Map(
+      swapRows.filter((s) => s.variantId === variantId).map((s) => [s.fromItemId, s.toItemId]),
+    );
+
+  // Raw materials and purchased parts found in an owner's composition, at any depth.
+  const itemsIn = (o: Owner) => {
+    const found = new Set<number>();
+    const seen = new Set<number>();
+    const walk = (ls: Line[]) => {
+      for (const l of ls) {
+        if (l.itemId != null) found.add(l.itemId);
+        if (l.partVersionId != null && !seen.has(l.partVersionId)) {
+          seen.add(l.partVersionId);
+          walk(lines.filter((x) => x.versionId === l.partVersionId));
+        }
+      }
+    };
+    walk(ownerLines(o));
+    return found;
+  };
+
+  // Cost functions for one set of swaps; each has its own memo, as a swap changes version costs.
+  const make = (swaps: Map<number, number>) => {
+    const memo = new Map<number, Cost>();
+
+    // Amounts are ten-thousandths, quantities thousandths (or seconds, or a count): no rounding here.
+    const lineCost = (l: Line): Cost => {
+      if (l.itemId != null) {
+        const p = prices.get(swaps.get(l.itemId) ?? l.itemId);
+        return p ? { value: (l.quantity * p.amount) / 1e7, partial: false } : NONE;
+      }
+      if (l.operationId != null) {
+        const r = rates.get(l.operationId);
+        if (!r) return NONE;
+        const per = perHour.has(l.operationId) ? 3600 * 1e4 : 1e7;
+        return { value: (l.quantity * r.amount) / per, partial: false };
+      }
+      const c = versionCost(l.partVersionId!);
+      return c.value == null ? NONE : { value: l.quantity * c.value, partial: c.partial };
+    };
+
+    const total = (ls: Line[]): Cost => {
+      if (!ls.length) return { value: null, partial: false };
+      const cs = ls.map(lineCost);
+      const known = cs.filter((c) => c.value != null);
+      return {
+        value: known.length ? known.reduce((a, c) => a + c.value!, 0) : null,
+        partial: cs.some((c) => c.partial),
+      };
+    };
+
+    // Recursion ends: cycles are refused when lines are added or changed.
+    const versionCost = (id: number): Cost => {
+      if (!memo.has(id)) memo.set(id, total(lines.filter((l) => l.versionId === id)));
+      return memo.get(id)!;
+    };
+
+    return { lineCost, total, versionCost };
+  };
+
+  const base = make(new Map());
+  const forOwner = (o: Owner) => (o.kind === "variant" ? make(swapsOf(o.id)) : base);
+  const ownerCost = (o: Owner) => forOwner(o).total(ownerLines(o));
+
+  return { lines, ...base, ownerLines, swapsOf, itemsIn, forOwner, ownerCost };
+}
+
+// Product cost: its composition, or the min–max of its variants' costs (empty variants left out).
+export function productCost(
+  calc: ReturnType<typeof calculator>,
+  productId: number,
+  variantIds: number[],
+): Cost {
+  if (!variantIds.length) return calc.ownerCost({ kind: "product", id: productId });
+  const cs = variantIds.map((id) => calc.ownerCost({ kind: "variant", id }));
+  const vs = cs.flatMap((c) => (c.value == null ? [] : [c.value]));
+  const partial = cs.some((c) => c.partial);
+  if (!vs.length) return { value: null, partial: false };
+  const [min, max] = [Math.min(...vs), Math.max(...vs)];
+  return min === max ? { value: min, partial } : { value: min, max, partial };
 }
 
 // ---------- reading ----------
@@ -103,6 +158,18 @@ export function getComposition(owner: Owner): { lines: CompositionLine[]; cost: 
   const d = ready();
   const calc = calculator();
   const ls = calc.ownerLines(owner);
+  const costs = calc.forOwner(owner);
+  const swaps = owner.kind === "variant" ? calc.swapsOf(owner.id) : new Map<number, number>();
+  const swapSkus = new Map(
+    swaps.size
+      ? d
+          .select({ id: items.id, sku: items.sku })
+          .from(items)
+          .where(inArray(items.id, [...swaps.values()]))
+          .all()
+          .map((i) => [i.id, i.sku])
+      : [],
+  );
   const itemIds = ls.flatMap((l) => (l.itemId == null ? [] : [l.itemId]));
   const its = new Map(
     (itemIds.length
@@ -132,7 +199,13 @@ export function getComposition(owner: Owner): { lines: CompositionLine[]; cost: 
   const vers = versionInfo(ls.flatMap((l) => (l.partVersionId == null ? [] : [l.partVersionId])));
 
   const lines = ls.map((l): CompositionLine => {
-    const base = { id: l.id, quantity: l.quantity, toReview: l.toReview, cost: calc.lineCost(l) };
+    const base = {
+      id: l.id,
+      quantity: l.quantity,
+      toReview: l.toReview,
+      cost: costs.lineCost(l),
+      swap: l.itemId == null ? null : (swapSkus.get(swaps.get(l.itemId)!) ?? null),
+    };
     if (l.itemId != null) {
       const i = its.get(l.itemId)!;
       return {
@@ -168,7 +241,7 @@ export function getComposition(owner: Owner): { lines: CompositionLine[]; cost: 
       unit: null,
     };
   });
-  return { lines, cost: calc.total(ls) };
+  return { lines, cost: costs.total(ls) };
 }
 
 const componentCol = {
@@ -177,10 +250,29 @@ const componentCol = {
   version: compositionLines.partVersionId,
 };
 
-// Products and versions whose composition uses the component.
+// Products, variants and versions whose composition uses the component; for an item, also the
+// variants whose swaps replace another item with it.
 export function usedBy(c: Component): UsedBy[] {
   const d = ready();
   const ls = d.select().from(compositionLines).where(eq(componentCol[c.kind], c.id)).all();
+  const variantIds = [
+    ...ls.flatMap((l) => (l.variantId == null ? [] : [l.variantId])),
+    ...(c.kind === "item"
+      ? d
+          .select({ id: variantSwaps.variantId })
+          .from(variantSwaps)
+          .where(eq(variantSwaps.toItemId, c.id))
+          .all()
+          .map((s) => s.id)
+      : []),
+  ];
+  const vars = variantIds.length
+    ? d
+        .select({ id: productVariants.id, sku: productVariants.sku, name: productVariants.name })
+        .from(productVariants)
+        .where(inArray(productVariants.id, variantIds))
+        .all()
+    : [];
   const productIds = ls.flatMap((l) => (l.productId == null ? [] : [l.productId]));
   const prods = productIds.length
     ? d
@@ -193,24 +285,29 @@ export function usedBy(c: Component): UsedBy[] {
   return [
     ...[...vers].map(([id, v]) => ({ kind: "version" as const, id, sku: v.sku, name: v.name })),
     ...prods.map((p) => ({ kind: "product" as const, ...p })),
+    ...vars.map((v) => ({ kind: "variant" as const, ...v })),
   ].sort((a, b) => a.sku.localeCompare(b.sku));
 }
 
 // ---------- To review ----------
 
-// A version became Active: mark lines using any other version of its part, except on Retired products.
+// A version became Active: mark lines using any other version of its part, except on Retired
+// products and their variants.
 export function markOtherVersionLines(partId: number, activeId: number) {
   ready().run(sql`
     UPDATE composition_lines SET to_review = 1
     WHERE part_version_id IN (SELECT id FROM part_versions WHERE part_id = ${partId} AND id <> ${activeId})
-      AND (product_id IS NULL OR product_id NOT IN (SELECT id FROM products WHERE status = 'Retired'))`);
+      AND (product_id IS NULL OR product_id NOT IN (SELECT id FROM products WHERE status = 'Retired'))
+      AND (variant_id IS NULL OR variant_id NOT IN (
+        SELECT v.id FROM product_variants v JOIN products p ON p.id = v.product_id WHERE p.status = 'Retired'))`);
 }
 
-// A product left Retired: mark its lines that don't use the Active version of their part.
+// A product left Retired: mark its lines, and its variants' lines, that don't use the Active version of their part.
 export function markOutdatedLines(productId: number) {
   ready().run(sql`
     UPDATE composition_lines SET to_review = 1
-    WHERE product_id = ${productId}
+    WHERE (product_id = ${productId}
+        OR variant_id IN (SELECT id FROM product_variants WHERE product_id = ${productId}))
       AND part_version_id IN (
         SELECT l.id FROM part_versions l JOIN part_versions a ON a.part_id = l.part_id
         WHERE a.status = 'Active' AND a.id <> l.id)`);
@@ -227,16 +324,32 @@ function lineRow(id: number) {
 const lineOwner = (l: Line): Owner =>
   l.productId != null
     ? { kind: "product", id: l.productId }
-    : { kind: "version", id: l.versionId! };
+    : l.variantId != null
+      ? { kind: "variant", id: l.variantId }
+      : { kind: "version", id: l.versionId! };
+
+export function checkProductEditable(id: number) {
+  const p = ready().select().from(products).where(eq(products.id, id)).get();
+  if (!p) throw new Error(`Product ${id} not found`);
+  if (p.status === "Retired") throw new Error("A retired product's composition cannot be changed.");
+  return p;
+}
+
+export function variantRow(id: number) {
+  const v = ready().select().from(productVariants).where(eq(productVariants.id, id)).get();
+  if (!v) throw new Error(`Variant ${id} not found`);
+  return v;
+}
 
 // The owner exists and its composition can be changed.
 function checkOwner(o: Owner) {
   const d = ready();
   if (o.kind === "product") {
-    const p = d.select().from(products).where(eq(products.id, o.id)).get();
-    if (!p) throw new Error(`Product ${o.id} not found`);
-    if (p.status === "Retired")
-      throw new Error("A retired product's composition cannot be changed.");
+    checkProductEditable(o.id);
+    if (d.select().from(productVariants).where(eq(productVariants.productId, o.id)).get())
+      throw new Error("This product has variants: edit the composition of a variant.");
+  } else if (o.kind === "variant") {
+    checkProductEditable(variantRow(o.id).productId);
   } else if (o.kind === "version") {
     if (!d.select().from(partVersions).where(eq(partVersions.id, o.id)).get())
       throw new Error(`Version ${o.id} not found`);
@@ -256,7 +369,7 @@ function checkComponent(owner: Owner, c: Component): CompositionLine["measure"] 
   if (c.kind === "item") {
     const i = d.select().from(items).where(eq(items.id, c.id)).get();
     if (!i) throw new Error(`Item ${c.id} not found`);
-    if (owner.kind === "product" && i.kind !== "part")
+    if (owner.kind !== "version" && i.kind !== "part")
       throw new Error("A product's composition only holds manufactured and purchased parts.");
     if (i.status !== "Active")
       throw new Error(`${i.sku} is ${i.status}: only Active items can be picked.`);
@@ -265,7 +378,7 @@ function checkComponent(owner: Owner, c: Component): CompositionLine["measure"] 
   if (c.kind === "operation") {
     const o = d.select().from(operations).where(eq(operations.id, c.id)).get();
     if (!o) throw new Error(`Operation ${c.id} not found`);
-    if (owner.kind === "product")
+    if (owner.kind !== "version")
       throw new Error("A product's composition only holds manufactured and purchased parts.");
     return o.rateKind === "hour" ? "duration" : "quantity";
   }
@@ -309,8 +422,11 @@ export function checkCycle(ownerId: number, componentId: number) {
 
 function checkDuplicate(owner: Owner, c: Component, exceptId = 0) {
   const d = ready();
-  const ownerCol =
-    owner.kind === "product" ? compositionLines.productId : compositionLines.versionId;
+  const ownerCol = {
+    product: compositionLines.productId,
+    version: compositionLines.versionId,
+    variant: compositionLines.variantId,
+  }[owner.kind];
   const clash = d
     .select({ id: compositionLines.id })
     .from(compositionLines)
@@ -334,6 +450,7 @@ export function addLine(owner: Owner, c: Component, quantity: number) {
     .values({
       productId: owner.kind === "product" ? owner.id : null,
       versionId: owner.kind === "version" ? owner.id : null,
+      variantId: owner.kind === "variant" ? owner.id : null,
       itemId: c.kind === "item" ? c.id : null,
       operationId: c.kind === "operation" ? c.id : null,
       partVersionId: c.kind === "version" ? c.id : null,

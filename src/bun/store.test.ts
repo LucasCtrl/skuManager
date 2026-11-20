@@ -16,6 +16,7 @@ import * as items from "./items";
 import * as operations from "./operations";
 import * as parts from "./parts";
 import * as composition from "./composition";
+import * as variants from "./variants";
 import { productSku, skuFolder, toCode, toPartName } from "../shared/sku";
 import { compareVersions } from "./db/version";
 import { APP_VERSION } from "../shared/version";
@@ -388,6 +389,124 @@ test("operations, manufactured parts, composition, cost and To review", () => {
   expect(parts.listPartVersions("", "Active", prd.id).map((v) => v.version)).toEqual([5]);
   composition.deleteLine(old.id);
   expect(composition.getComposition({ kind: "product", id: prd3.id }).lines).toEqual([]);
+  store.close();
+});
+
+test("product variants: composition moves, copies, swaps at depth, cost range", () => {
+  const dir = mkdtempSync(join(tmpdir(), "sku-"));
+  expect(store.openFolder(dir)).toEqual({ kind: "ready" });
+  const entry = (list: Parameters<typeof items.addEntry>[0], name: string) =>
+    items.addEntry(list, name, name).id;
+  const m2 = entry("unit", "m2");
+  const kg = entry("unit", "kg");
+  const piece = entry("unit", "piece");
+  const seller = entry("seller", "S");
+  const pmma = entry("materialType", "PMMA");
+  const mat = (colour: string, unitId: number, amount: number) =>
+    items.createItem({
+      kind: "material",
+      sellerId: seller,
+      typeId: pmma,
+      colourId: entry("colour", colour),
+      finishId: null,
+      size: "3MM",
+      specs: [],
+      unitId,
+      description: "",
+      sellerSku: "",
+      firstPrice: { date: "2026-01-01", amount },
+    });
+  const yellow = mat("YEL", m2, 100000); // 10 € / m²
+  const blue = mat("BLU", m2, 200000); // 20 € / m²
+  const heavy = mat("HVY", kg, 10000);
+  const box = (spec: string, amount: number) =>
+    items.createItem({
+      kind: "part",
+      sellerId: seller,
+      typeId: entry("partType", `BOX${spec}`),
+      colourId: null,
+      finishId: null,
+      size: "",
+      specs: [spec],
+      unitId: piece,
+      description: "",
+      sellerSku: "",
+      firstPrice: { date: "2026-01-01", amount },
+    });
+  const small = box("S", 5000); // 0.50 €
+  const large = box("L", 10000); // 1.00 €
+
+  // card (yellow PMMA) inside a kit: the swap applies at depth
+  const prd = store.createProduct("Tool ID card", "");
+  const card = parts.createPart(prd.id, "Card", "");
+  composition.addLine({ kind: "version", id: card.id }, { kind: "item", id: yellow.id }, 100); // 0.1 m² → 1 €
+  parts.updatePartVersion(card.id, "", "Active");
+  const kit = parts.createPart(prd.id, "Kit", "");
+  composition.addLine({ kind: "version", id: kit.id }, { kind: "version", id: card.id }, 10);
+  parts.updatePartVersion(kit.id, "", "Active");
+
+  const P = { kind: "product" as const, id: prd.id };
+  composition.addLine(P, { kind: "version", id: kit.id }, 1);
+  composition.addLine(P, { kind: "item", id: small.id }, 1000);
+  expect(store.getProduct(prd.id).cost.value).toBeCloseTo(10.5);
+
+  // first variant takes the product's composition
+  expect(variants.variantSku(prd.id, "y 10").sku).toBe("EK-PRD-00001-Y10");
+  const y10 = variants.createVariant(prd.id, "Y10", "Yellow ×10", "", null);
+  expect(composition.getComposition(P).lines).toEqual([]);
+  expect(composition.getComposition({ kind: "variant", id: y10.id }).lines.length).toBe(2);
+  expect(() => composition.addLine(P, { kind: "item", id: large.id }, 1000)).toThrow("variants");
+  expect(() => variants.createVariant(prd.id, "y10", "Dup", "", null)).toThrow("already used");
+
+  // copy, then swap: blue PMMA inside the card, large box on the variant
+  const b10 = variants.createVariant(prd.id, "B10", "Blue ×10", "", y10.id);
+  const B = { kind: "variant" as const, id: b10.id };
+  expect(composition.getComposition(B).lines.length).toBe(2);
+  expect(
+    variants
+      .listSwaps(b10.id)
+      .items.map((i) => i.id)
+      .sort(),
+  ).toEqual([yellow.id, small.id].sort());
+  variants.addSwap(b10.id, yellow.id, blue.id);
+  variants.addSwap(b10.id, small.id, large.id);
+  expect(() => variants.addSwap(b10.id, yellow.id, blue.id)).toThrow("already replaced");
+  expect(() => variants.addSwap(b10.id, blue.id, heavy.id)).toThrow("price unit");
+  expect(() => variants.addSwap(b10.id, blue.id, large.id)).toThrow("raw material");
+  const c = composition.getComposition(B);
+  expect(c.cost.value).toBeCloseTo(21); // 10 cards × 0.1 m² × 20 € + 1 €
+  expect(c.lines[1].swap).toBe(large.sku);
+  expect(parts.getPartVersion(card.id).version.cost.value).toBeCloseTo(1); // the part is unchanged
+  expect(store.getProduct(prd.id).cost).toMatchObject({ value: 10.5, max: 21 });
+  expect(store.listProducts("blue ×10").map((p) => p.id)).toEqual([prd.id]);
+  expect(composition.usedBy({ kind: "item", id: blue.id })).toEqual([
+    { kind: "variant", id: b10.id, sku: b10.sku, name: "Blue ×10" },
+  ]);
+
+  // a swap whose item is gone is not used; a copy keeps the swaps
+  variants.addSwap(b10.id, heavy.id, mat("HV2", kg, 1).id);
+  expect(variants.listSwaps(b10.id).swaps.map((s) => s.unused)).toEqual([false, false, true]);
+  const b100 = variants.createVariant(prd.id, "B100", "Blue ×100", "", b10.id);
+  expect(variants.listSwaps(b100.id).swaps.length).toBe(3);
+
+  // a new Active kit version marks the variant lines that use the old one
+  const kit2 = parts.newVersion(kit.id);
+  parts.updatePartVersion(kit2.id, "", "Active");
+  expect(store.listProducts("").find((p) => p.id === prd.id)!.toReview).toBe(true);
+
+  // retired: locked
+  store.updateProduct(prd.id, "Tool ID card", "", "Retired");
+  expect(() => variants.deleteVariant(b100.id)).toThrow("retired");
+  expect(() => variants.addSwap(b10.id, small.id, large.id)).toThrow("retired");
+  store.updateProduct(prd.id, "Tool ID card", "", "Active");
+
+  // deleting the last variant gives its composition back to the product
+  variants.deleteVariant(b100.id);
+  variants.deleteVariant(b10.id);
+  variants.deleteVariant(y10.id);
+  expect(store.getProduct(prd.id).variants).toEqual([]);
+  expect(composition.getComposition(P).lines.length).toBe(2);
+  expect(store.getProduct(prd.id).cost.value).toBeCloseTo(10.5);
   store.close();
 });
 

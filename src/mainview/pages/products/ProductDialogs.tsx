@@ -13,6 +13,7 @@ export function NameAndDescription({
   description,
   rows,
   placeholder,
+  autoFocus = true,
   onName,
   onDescription,
 }: {
@@ -20,6 +21,7 @@ export function NameAndDescription({
   description: string;
   rows: number;
   placeholder?: string;
+  autoFocus?: boolean;
   onName: (v: string) => void;
   onDescription: (v: string) => void;
 }) {
@@ -36,7 +38,7 @@ export function NameAndDescription({
       >
         <input
           id="pd-name"
-          autoFocus
+          autoFocus={autoFocus}
           required
           className={`${field} h-11`}
           value={name}

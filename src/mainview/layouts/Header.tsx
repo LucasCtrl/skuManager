@@ -16,7 +16,7 @@ export function Header({
   const t = useT();
   // A product, part, material, purchased part or operation page highlights the link of its list.
   const current =
-    page.name === "list" || page.name === "product"
+    page.name === "list" || page.name === "product" || page.name === "variant"
       ? "products"
       : page.name === "parts" || page.name === "version"
         ? "manufactured"

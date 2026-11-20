@@ -87,7 +87,8 @@ export type PartStatus = (typeof PART_STATUSES)[number];
 export type PartStatusChange = { status: PartStatus; changedAt: string };
 
 // value in currency units, unrounded; null = "—" (no price, or empty composition).
-export type Cost = { value: number | null; partial: boolean };
+// max: set on a product with variants whose costs differ, value is then the min.
+export type Cost = { value: number | null; partial: boolean; max?: number };
 
 export type PartVersion = {
   id: number;
@@ -104,7 +105,7 @@ export type PartVersion = {
   updatedAt: string;
 };
 
-export type Owner = { kind: "product" | "version"; id: number };
+export type Owner = { kind: "product" | "version" | "variant"; id: number };
 export type Component = { kind: "item" | "operation" | "version"; id: number };
 
 // quantity: thousandths of the unit; seconds for a per hour operation; a whole count for a version.
@@ -119,9 +120,33 @@ export type CompositionLine = {
   quantity: number;
   toReview: boolean;
   cost: Cost;
+  swap: string | null; // on a variant: SKU of the item a swap uses instead of this line's item
 };
 
-export type UsedBy = { kind: "product" | "version"; id: number; sku: string; name: string };
+export type UsedBy = {
+  kind: "product" | "version" | "variant";
+  id: number;
+  sku: string;
+  name: string;
+};
+
+// ---------- product variants (docs/products.md#variants) ----------
+
+export type Variant = {
+  id: number;
+  productId: number;
+  code: string;
+  sku: string;
+  name: string;
+  description: string;
+  toReview: boolean;
+  cost: Cost; // swaps applied
+  createdAt: string;
+  updatedAt: string;
+};
+
+// unused: `from` appears nowhere in the variant, at any depth.
+export type Swap = { id: number; from: Item; to: Item; unused: boolean };
 export type Theme = "system" | "light" | "dark";
 export type Lang = "en" | "fr";
 export type Settings = { dataFolder: string | null; theme: Theme; lang: Lang | null };
@@ -171,8 +196,11 @@ export type AppRPC = {
       getInfo: Req<{}, AppInfo>;
       quit: Req<{}, void>;
 
-      listProducts: Req<{ query: string }, (Product & { toReview: boolean })[]>;
-      getProduct: Req<{ id: number }, { product: Product; history: StatusChange[] }>;
+      listProducts: Req<{ query: string }, (Product & { toReview: boolean; cost: Cost })[]>;
+      getProduct: Req<
+        { id: number },
+        { product: Product; history: StatusChange[]; variants: Variant[]; cost: Cost }
+      >;
       nextSku: Req<{}, string>;
       createProduct: Req<{ name: string; description: string }, Product>;
       updateProduct: Req<
@@ -235,6 +263,27 @@ export type AppRPC = {
       moveLine: Req<{ id: number; by: -1 | 1 }, void>; // -1: up, 1: down
       markReviewed: Req<{ id: number }, void>;
       usedBy: Req<{ component: Component }, UsedBy[]>;
+
+      getVariant: Req<{ id: number }, { variant: Variant; product: Product }>;
+      variantSku: Req<{ productId: number; code: string }, string>; // creation preview, throws if invalid
+      // copyFromId: copy that variant's composition and swaps. The first variant takes the product's composition.
+      createVariant: Req<
+        {
+          productId: number;
+          code: string;
+          name: string;
+          description: string;
+          copyFromId: number | null;
+        },
+        Variant
+      >;
+      updateVariant: Req<{ id: number; name: string; description: string }, Variant>;
+      deleteVariant: Req<{ id: number }, void>; // the last one gives its composition back to the product
+      // items: every raw material and purchased part found in the variant, at any depth
+      listSwaps: Req<{ variantId: number }, { swaps: Swap[]; items: Item[] }>;
+      addSwap: Req<{ variantId: number; fromId: number; toId: number }, void>;
+      updateSwap: Req<{ id: number; toId: number }, void>;
+      deleteSwap: Req<{ id: number }, void>;
 
       listDir: Req<{ sku: string; path: string }, FileEntry[]>;
       mkdir: Req<{ sku: string; path: string; name: string }, FileEntry>;

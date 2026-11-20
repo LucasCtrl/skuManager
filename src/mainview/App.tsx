@@ -10,6 +10,7 @@ import { PartPage } from "./pages/parts/PartPage";
 import { OperationPage } from "./pages/operations/OperationPage";
 import { ProductList } from "./pages/products/ProductList";
 import { ProductPage } from "./pages/products/ProductPage";
+import { VariantPage } from "./pages/products/VariantPage";
 import { SettingsPage } from "./pages/settings/SettingsPage";
 import { AppOutdated } from "./pages/setup/AppOutdated";
 import { FirstRun } from "./pages/setup/FirstRun";
@@ -19,6 +20,7 @@ import { api } from "./rpc";
 export type Page =
   | { name: "list" }
   | { name: "product"; id: number }
+  | { name: "variant"; id: number }
   | { name: "parts" }
   | { name: "version"; id: number }
   | { name: "items"; kind: ItemKind }
@@ -95,6 +97,9 @@ export default function App() {
             )}
             {page.name === "product" && (
               <ProductPage key={page.id} id={page.id} lang={lang} onNavigate={setPage} />
+            )}
+            {page.name === "variant" && (
+              <VariantPage key={page.id} id={page.id} lang={lang} onNavigate={setPage} />
             )}
             {page.name === "parts" && (
               <PartList onOpen={(id) => setPage({ name: "version", id })} />

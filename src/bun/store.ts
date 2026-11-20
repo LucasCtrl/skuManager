@@ -5,13 +5,22 @@ import { asc, desc, eq, getTableColumns, sql } from "drizzle-orm";
 import { existsSync, mkdirSync, readdirSync, renameSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { APP_VERSION } from "../shared/version";
-import type { DbState, FolderInfo, Product, Status, StatusChange } from "../shared/rpc";
+import type {
+  Cost,
+  DbState,
+  FolderInfo,
+  Product,
+  Status,
+  StatusChange,
+  Variant,
+} from "../shared/rpc";
 import { STATUSES } from "../shared/rpc";
-import { products, statusHistory } from "./db/schema";
+import { products, productVariants, statusHistory } from "./db/schema";
 import { migrations } from "./db/migrations";
 import { compareVersions } from "./db/version";
 import { DIRS, PRODUCT_RE, productSku } from "../shared/sku";
-import { markOutdatedLines } from "./composition";
+import { calculator, markOutdatedLines, productCost } from "./composition";
+import { listVariants } from "./variants";
 
 let sqlite: Database | null = null;
 let db: BunSQLiteDatabase | null = null;
@@ -176,28 +185,47 @@ export function inspectFolder(dir: string): FolderInfo {
 
 // ---------- products ----------
 
-export function listProducts(query: string): (Product & { toReview: boolean })[] {
+// Searches the SKU, name and description, and the code and name of the product's variants.
+export function listProducts(query: string): (Product & { toReview: boolean; cost: Cost })[] {
   const q = query.trim(); // plain substring, like the other lists (LIKE would treat _ and % as wildcards)
-  return ready()
+  const calc = calculator();
+  const variants = ready().select().from(productVariants).all();
+  const rows = ready()
     .select({
       ...getTableColumns(products),
       // qualified by hand: drizzle leaves columns unqualified, and "id" would bind to composition_lines
       toReview:
-        sql<boolean>`exists (select 1 from composition_lines l where l.product_id = products.id and l.to_review)`.mapWith(
+        sql<boolean>`exists (select 1 from composition_lines l where l.to_review and (l.product_id = products.id
+          or l.variant_id in (select v.id from product_variants v where v.product_id = products.id)))`.mapWith(
           Boolean,
         ),
     })
     .from(products)
     .where(
       q
-        ? sql`instr(lower(${products.sku} || ' ' || ${products.name} || ' ' || ${products.description}), lower(${q})) > 0`
+        ? sql`instr(lower(${products.sku} || ' ' || ${products.name} || ' ' || ${products.description}
+            || coalesce((select group_concat(v.code || ' ' || v.name, ' ') from product_variants v
+                where v.product_id = products.id), '')), lower(${q})) > 0`
         : undefined,
     )
     .orderBy(desc(products.id))
     .all();
+  return rows.map((p) => ({
+    ...p,
+    cost: productCost(
+      calc,
+      p.id,
+      variants.filter((v) => v.productId === p.id).map((v) => v.id),
+    ),
+  }));
 }
 
-export function getProduct(id: number): { product: Product; history: StatusChange[] } {
+export function getProduct(id: number): {
+  product: Product;
+  history: StatusChange[];
+  variants: Variant[];
+  cost: Cost;
+} {
   const d = ready();
   const product = d.select().from(products).where(eq(products.id, id)).get();
   if (!product) throw new Error(`Product ${id} not found`);
@@ -207,7 +235,18 @@ export function getProduct(id: number): { product: Product; history: StatusChang
     .where(eq(statusHistory.productId, id))
     .orderBy(asc(statusHistory.id))
     .all();
-  return { product, history };
+  const calc = calculator();
+  const variants = listVariants(id, calc);
+  return {
+    product,
+    history,
+    variants,
+    cost: productCost(
+      calc,
+      id,
+      variants.map((v) => v.id),
+    ),
+  };
 }
 
 export function cleanName(name: string) {

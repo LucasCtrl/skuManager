@@ -1,6 +1,6 @@
 # Products
 
-Code: `src/bun/store.ts`, `src/bun/db/schema.ts`, `src/mainview/pages/products/`.
+Code: `src/bun/store.ts`, `src/bun/variants.ts`, `src/bun/db/schema.ts`, `src/mainview/pages/products/`.
 
 ## SKU
 
@@ -173,7 +173,7 @@ The copy button on the variant page opens the creation popup with that variant p
 
 A swap replaces one item with another everywhere in a variant: `Yellow PMMA → Blue PMMA`, `Black PLA → Blue PLA`, `Small box → Large box`. It lets variants use the same manufactured parts in another colour or with other consumables, without creating new parts.
 
-- A swap replaces item X with item Y. X and Y are both raw materials or both purchased parts (screws, boxes, bags, …), with the same price unit. Y is picked from the `Active` items; X from any item.
+- A swap replaces item X with item Y. X and Y are both raw materials or both purchased parts (screws, boxes, bags, …), with the same price unit. X is picked from the items found in the variant, at any depth; Y from the `Active` items of the same kind and price unit.
 - It applies at any depth: on the variant's own lines and inside every manufactured part of its composition, sub-assemblies included. Each line of X keeps its quantity and uses Y instead.
 - A variant can have several swaps. Each item can be replaced by at most one swap: adding a second swap for the same X is refused. X and Y must differ.
 - Swaps are not chained: a swap's Y is never replaced by another swap.
